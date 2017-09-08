@@ -1,0 +1,22 @@
+{
+  "name": "kart",
+  "version": "0.1.0",
+  "description": "Kano Archive and Release Tool. Managing releases mainly of static websites.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KanoComputing/kart.git"
+  },
+  "author": "Radek Pazdera <radek@kano.me>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KanoComputing/kart/issues"
+  },
+  "homepage": "https://github.com/KanoComputing/kart#readme",
+  "dependencies": {
+    "aws-sdk": "^2.111.0"
+  }
+}

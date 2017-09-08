@@ -1,0 +1,9 @@
+# OSX
+**.DS_Store
+
+#Editor specific
+.vscode
+
+# App
+node_modules
+
