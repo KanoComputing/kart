@@ -1,6 +1,6 @@
-const rlib = require('../lib');
+const kart = require('../lib');
 
-rlib.configure({
+kart.configure({
     awsKey: process.env.AWS_KEY,
     awsSecret: process.env.AWS_SECRET,
     rootBucket: {
@@ -9,9 +9,11 @@ rlib.configure({
     }
 }).then(() => {
 
-    rlib.list('kano-code', 'staging', {filter: {version: '1.0.7'},sort: {key: ['version', 'build'], order: 1}, limit: 1})
+    kart.list('kano-code', 'staging', {sort: {key: ['version', 'build'], order: -1}})
         .then((data) => {
             console.log(data);
+
+            kart.release(data[0]);
         }).catch((err) => {
             console.log(err);
         });

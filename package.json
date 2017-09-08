@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/KanoComputing/kart#readme",
   "dependencies": {
-    "aws-sdk": "^2.111.0"
+    "aws-sdk": "^2.111.0",
+    "semver": "^5.4.1",
+    "tar.gz": "^1.0.5"
   }
 }
