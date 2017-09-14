@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Kano Archive and Release Tool. Managing releases mainly of static websites.",
   "main": "lib/index.js",
+  "bin": {
+    "kart": "bin/kart"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,7 +21,10 @@
   "homepage": "https://github.com/KanoComputing/kart#readme",
   "dependencies": {
     "aws-sdk": "^2.111.0",
+    "colors": "^1.1.2",
+    "inquirer": "^3.2.3",
     "semver": "^5.4.1",
-    "tar.gz": "^1.0.5"
+    "tar.gz": "^1.0.5",
+    "yargs": "^8.0.2"
   }
 }

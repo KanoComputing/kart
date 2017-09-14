@@ -4,11 +4,17 @@
             "compression": "tgz",
             "channels": {
                 "staging": {
-                    "bucket": "releases-target-testing",
+                    "deploy": {
+                        "method": "s3",
+                        "bucket": "releases-target-testing"
+                    },
                     "url": "https://apps-staging.kano.me"
                 },
                 "production": {
-                    "bucket": "releases-target-testing",
+                    "deploy": {
+                        "method": "s3",
+                        "bucket": "releases-target-testing"
+                    },
                     "url": "https://apps.kano.me"
                 }
             }

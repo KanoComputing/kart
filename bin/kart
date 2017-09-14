@@ -1,0 +1,145 @@
+const inquirer = require('inquirer'),
+      yargs = require('yargs'),
+      package = require('../package.json'),
+      kart = require('../lib'),
+      colors = require('colors');
+
+function selectProject() {
+    let projects,
+        project,
+        channel;
+
+    return kart.getProjects()
+        .then((p) => {
+            projects = p;
+            return inquirer.prompt([{
+                type: 'list',
+                name: 'project',
+                message: 'Which project',
+                paginated: true,
+                choices: Object.keys(projects)
+            }]);
+        }).then(answers => {
+            project = answers.project;
+
+            return inquirer.prompt([{
+                type: 'list',
+                name: 'channel',
+                message: 'Which channel',
+                paginated: true,
+                choices: Object.keys(projects[project].channels)
+            }]);
+        }).then(answers => {
+            channel = answers.channel;
+
+            return kart.status(project, channel);
+        }).then((s) => {
+            return {
+                name: project,
+                channel,
+                status: s
+            };
+        });
+}
+
+function _zeroPad(v) {
+    return ('0' + v).slice(-2);
+}
+
+function _formatDate(d) {
+    return `${_zeroPad(d.getDate())}/${_zeroPad(d.getMonth() + 1)}/${d.getFullYear()} ` +
+           `${_zeroPad(d.getHours())}:${_zeroPad(d.getMinutes())}:${_zeroPad(d.getSeconds())}`
+}
+
+function printStatus(project, channel, release) {
+    console.log();
+    console.log(`Current ${channel.cyan} release of ${project.cyan}:`);
+    
+    if (release) {
+        console.log(`    Version:  ` + `${release.buildVersion}`.yellow);
+        console.log(`    Built:    ${_formatDate(release.buildDate)}`);
+        console.log(`    Deployed: ${_formatDate(release.releaseDate)}`);
+    } else {
+        console.log(`    Version:  ` + `unknown`.red);
+        console.log(`    Built:    ` + `???`.gray);
+        console.log(`    Deployed: ` + `???`.gray);
+    }
+    console.log();
+}
+
+// ----
+
+function release(argv) {
+    let project;
+
+    return selectProject().then((p) => {
+            project = p;
+
+            printStatus(project.name, project.channel, project.status);
+
+            return kart.archive.list(project.name, project.channel, {
+                sort: {
+                    key: 'buildDate',
+                    order: -1
+                }
+            });
+        }).then((builds) => {
+            let choices = builds.map((build) => {
+                let choice = {
+                    name: `${build.buildVersion} (${_formatDate(build.buildDate)})`,
+                    value: build
+                };
+
+                if (project.status &&
+                    project.status.version === build.version &&
+                    project.status.revision === build.revision &&
+                    project.status.number === build.number) {
+
+                    choice.name += ' (current)'.yellow;
+                }
+
+                return choice;
+            });
+
+            if (choices.length > 0) {
+                choices[0].name += ' (latest)'.gray
+            }
+
+            return inquirer.prompt([{
+                type: 'list',
+                name: 'build',
+                message: 'Pick a build to deploy',
+                paginated: true,
+                choices: choices
+            }]);
+        }).then(answers => {
+            build = answers.build;
+
+            console.log(`Deploying version ${build.buildVersion.yellow} of ${build.project.cyan} to ${build.channel.cyan}`);
+            return kart.release(build);
+        });
+}
+
+function status(argv) {
+    return selectProject().then((p) => {
+        printStatus(p.name, p.channel, p.status);
+    });
+}
+
+// ----
+
+let argv = yargs
+    .command('release', 'deploy a new release of a project', () => {}, (argv) => {
+        console.log('kart: Making a release');
+        release(argv).catch((err) => {
+            console.log(err);
+        });
+    })
+    .command('status', 'show current deployments for a project', () => {}, (argv) => {
+        console.log('kart: Showing status for channel');
+        status(argv).catch((err) => {
+            console.log(err);
+        });
+    })
+    .help()
+    .argv;
