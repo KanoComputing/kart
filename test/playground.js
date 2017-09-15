@@ -9,14 +9,14 @@ kart.configure({
     // }
 }).then(() => {
 
-    kart.archive.list('kano-code', 'staging', {sort: {key: ['version', 'build'], order: 1}})
-        .then((data) => {
-            console.log(data);
-        }).catch((err) => {
-            console.log(err);
-        });
+    // kart.archive.list('kano-code', 'staging', {sort: {key: ['version', 'build'], order: 1}})
+    //     .then((data) => {
+    //         console.log(data);
+    //     }).catch((err) => {
+    //         console.log(err);
+    //     });
 
-    kart.archive.store('./test/resources', 'kano-code', 'staging', '1.10.0', '1234567')
+    kart.archive.store('./test/resources', 'kano-code', 'staging', '1.10.0', null, null, {revision: '1234567'})
         .then((build) => {
             console.log(build);
         })

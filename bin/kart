@@ -2,7 +2,10 @@ const inquirer = require('inquirer'),
       yargs = require('yargs'),
       package = require('../package.json'),
       kart = require('../lib'),
-      colors = require('colors');
+      colors = require('colors'),
+      gitRev = require('git-rev-sync'),
+      fs = require('fs');
+      path = require('path');
 
 function selectProject() {
     let projects,
@@ -57,10 +60,16 @@ function printStatus(project, channel, release) {
     
     if (release) {
         console.log(`    Version:  ` + `${release.buildVersion}`.yellow);
+        if (release.metadata.revision) {
+            console.log(`    Commit:   ` + `${release.metadata.revision}`);
+        } else {
+            console.log(`    Commit:   ` + `???`.gray);
+        }
         console.log(`    Built:    ${_formatDate(release.buildDate)}`);
         console.log(`    Deployed: ${_formatDate(release.releaseDate)}`);
     } else {
         console.log(`    Version:  ` + `unknown`.red);
+        console.log(`    Commit:   ` + `???`.gray);
         console.log(`    Built:    ` + `???`.gray);
         console.log(`    Deployed: ` + `???`.gray);
     }
@@ -92,7 +101,6 @@ function release(argv) {
 
                 if (project.status &&
                     project.status.version === build.version &&
-                    project.status.revision === build.revision &&
                     project.status.number === build.number) {
 
                     choice.name += ' (current)'.yellow;
@@ -115,8 +123,33 @@ function release(argv) {
         }).then(answers => {
             build = answers.build;
 
-            console.log(`Deploying version ${build.buildVersion.yellow} of ${build.project.cyan} to ${build.channel.cyan}`);
-            return kart.release(build);
+            return build.fetchMetadata();
+        }).then(() => {
+            console.log('');
+            console.log(`Build details`);
+            console.log(`    Version: ${build.buildVersion.yellow}`);
+
+            if (build.metadata.revision) {
+                console.log(`    Commit:  ${build.metadata.revision}`);
+            }
+
+            console.log(`    Built:   ${_formatDate(build.buildDate).cyan}`);
+            console.log('');
+
+            return inquirer.prompt([{
+                type: 'confirm',
+                name: 'proceed',
+                message: `All good`,
+                default: false
+            }]);
+        }).then(answers => {
+            if (answers.proceed) {
+                console.log(`Deploying ${build.project.cyan} ${build.buildVersion.yellow} to ${build.channel.cyan}`);
+                return kart.release(build);
+            } else {
+                console.log('Aborted');
+                return;
+            }
         });
 }
 
@@ -124,6 +157,43 @@ function status(argv) {
     return selectProject().then((p) => {
         printStatus(p.name, p.channel, p.status);
     });
+}
+
+// ----
+
+function archive(argv) {
+    let build,
+        packagejsonPath = './' + path.normalize(argv.fromRepo + '/package.json'),
+        packagejson,
+        name,
+        version,
+        metadata;
+
+    if (argv.fromRepo) {
+        try {
+            packagejson = JSON.parse(fs.readFileSync(packagejsonPath, 'utf8'));
+            name = packagejson.name;
+            version = packagejson.version;
+        } catch (err) {}
+
+        metadata = {
+            revision: gitRev.long(argv.fromRepo)
+        };
+    }
+
+    name = argv.name ? argv.name : name;
+    version = argv.version ? argv.version : version;
+
+    return kart.archive.store(argv.buildDir, name, argv.channel, version, null, argv.arch, metadata)
+        .then((b) => {
+            build = b;
+
+            console.log(build.publicUrl);
+
+            if (argv.release) {
+                return kart.release(build);
+            }
+        });
 }
 
 // ----
@@ -140,6 +210,57 @@ let argv = yargs
         status(argv).catch((err) => {
             console.log(err);
         });
+    })
+    .command('archive <build-dir>', 'archive a build', {
+        'from-repo': {
+            alias: 'r',
+            describe: 'path to repository related to the build (for autodetecting params)',
+            type: 'string'
+        },
+        'name': {
+            describe: 'set project name (or override autodetected one)',
+            type: 'string'
+        },
+        'version': {
+            describe: 'set project version (or override autodetected one)',
+            type: 'string'
+        },
+        'revision': {
+            describe: 'set project revision (or override autodetected one)',
+            type: 'string'
+        },
+        'arch': {
+            describe: 'set build arch (defaults to all)',
+            type: 'string',
+            default: 'all'
+        },
+        'channel': {
+            alias: 'c',
+            describe: 'build to be archived',
+            type: 'string',
+            demandOption: true
+        },
+        'archive-root': {
+            describe: 'override archive root bucket',
+            type: 'string',
+            alias: 'a'
+        },
+        'release': {
+            describe: 'release after archiving',
+            type: 'boolean'
+        }
+    }, (argv) => {
+        if (argv.archiveRoot) {
+            return kart.configure({
+                rootBucket: {
+                    name: argv.archiveRoot
+                }
+            }).then(() => {
+                    return archive(argv);
+                });
+        } else {
+            return archive(argv);
+        }
     })
     .help()
     .argv;

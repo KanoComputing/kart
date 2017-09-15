@@ -8,7 +8,7 @@
                         "method": "s3",
                         "bucket": "releases-target-testing"
                     },
-                    "url": "https://apps-staging.kano.me"
+                    "url": "https://apps-staging.kano.me",
                 },
                 "production": {
                     "deploy": {
