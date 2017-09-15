@@ -15,12 +15,16 @@ function selectProject() {
     return kart.getProjects()
         .then((p) => {
             projects = p;
+            let choices = Object.keys(projects),
+                dir = path.basename(process.cwd());
+
             return inquirer.prompt([{
                 type: 'list',
                 name: 'project',
                 message: 'Which project',
                 paginated: true,
-                choices: Object.keys(projects)
+                choices: choices,
+                default: choices.indexOf(dir) >= 0 ? dir : null
             }]);
         }).then(answers => {
             project = answers.project;
@@ -139,7 +143,7 @@ function release(argv) {
             return inquirer.prompt([{
                 type: 'confirm',
                 name: 'proceed',
-                message: `All good`,
+                message: `All good?`,
                 default: false
             }]);
         }).then(answers => {
