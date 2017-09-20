@@ -51,7 +51,7 @@ credentials as the example above shows. If omitted, kart will use your
 [system AWS settings](http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html)
 by default.
 
-### Remote
+### Remote
 
 _You only need to do this if you're setting up a new archive from scratch._
 
@@ -110,8 +110,7 @@ You can use the `status` command to verify that everything went well.
 
     kart status
 
-
-### Archiving builds
+### Archiving builds
 
 You shouldn't need to be archiving builds by hand, but when used in Jenkins
 integrations the `archive` command can be useful.
@@ -199,9 +198,10 @@ the same account as your root bucket is.
  * Builds cleanup via the kart binary
  * UI for remote configuration management via the kart binary
    * Adding/removing projects
- * UI for 
+ * UI for listing and downloading builds
+ * Print URL after reploying
 
-## Licence
+## Licence
 
 Copyright (c) 2017 Kano Computing Limited
 
