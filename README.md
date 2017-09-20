@@ -200,6 +200,7 @@ the same account as your root bucket is.
    * Adding/removing projects
  * UI for listing and downloading builds
  * Print URL after reploying
+ * Tests using [mock-aws-s3](https://github.com/MathieuLoutre/mock-aws-s3)
 
 ## Licence
 
