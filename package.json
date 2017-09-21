@@ -24,6 +24,7 @@
     "colors": "^1.1.2",
     "git-rev-sync": "^1.9.1",
     "inquirer": "^3.2.3",
+    "mime-types": "^2.1.17",
     "semver": "^5.4.1",
     "tar.gz": "^1.0.5",
     "yargs": "^8.0.2"
