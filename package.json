@@ -1,6 +1,6 @@
 {
   "name": "kart",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Kano Archive and Release Tool. Managing releases mainly of static websites.",
   "main": "lib/index.js",
   "bin": {
