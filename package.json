@@ -27,6 +27,7 @@
     "mime-types": "^2.1.17",
     "semver": "^5.4.1",
     "tar.gz": "^1.0.5",
+    "update-notifier": "^2.3.0",
     "yargs": "^8.0.2"
   }
 }

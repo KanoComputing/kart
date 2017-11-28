@@ -7,7 +7,10 @@ const inquirer = require('inquirer'),
       colors = require('colors'),
       gitRev = require('git-rev-sync'),
       fs = require('fs');
-      path = require('path');
+      path = require('path'),
+      updateNotifier = require('update-notifier');
+
+updateNotifier({pkg: package}).notify();
 
 function selectProject() {
     let projects,
