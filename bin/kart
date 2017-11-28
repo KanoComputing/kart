@@ -12,7 +12,7 @@ const inquirer = require('inquirer'),
 
 updateNotifier({pkg: package}).notify();
 
-function selectProject() {
+function selectProject(opts) {
     let projects,
         project,
         channel;
@@ -23,24 +23,45 @@ function selectProject() {
             let choices = Object.keys(projects),
                 dir = path.basename(process.cwd());
 
-            return inquirer.prompt([{
-                type: 'list',
-                name: 'project',
-                message: 'Which project',
-                paginated: true,
-                choices: choices,
-                default: choices.indexOf(dir) >= 0 ? dir : null
-            }]);
+            /* Skip prompt when the user passed name via CLI args */
+            if (opts.name) {
+                if (choices.indexOf(opts.name) >= 0) {
+                    console.log('Project: ' + opts.name.cyan);
+                    return Promise.resolve({project: opts.name});
+                } else {
+                    throw new Error('Project name not recognised');
+                }
+            } else {
+                return inquirer.prompt([{
+                    type: 'list',
+                    name: 'project',
+                    message: 'Which project',
+                    paginated: true,
+                    choices: choices,
+                    default: choices.indexOf(dir) >= 0 ? dir : null
+                }]);
+            }
         }).then(answers => {
             project = answers.project;
+            let choices = Object.keys(projects[project].channels);
 
-            return inquirer.prompt([{
-                type: 'list',
-                name: 'channel',
-                message: 'Which channel',
-                paginated: true,
-                choices: Object.keys(projects[project].channels)
-            }]);
+            /* Skip prompt when the user passed channel via CLI args */
+            if (opts.channel) {
+                if (choices.indexOf(opts.channel) >= 0) {
+                    console.log('Channel: ' + opts.channel.cyan);
+                    return Promise.resolve({channel: opts.channel});
+                } else {
+                    throw new Error('Channel doesn\'t exist for ' + project);
+                }
+            } else {
+                return inquirer.prompt([{
+                    type: 'list',
+                    name: 'channel',
+                    message: 'Which channel',
+                    paginated: true,
+                    choices: choices
+                }]);
+            }
         }).then(answers => {
             channel = answers.channel;
 
@@ -49,7 +70,8 @@ function selectProject() {
             return {
                 name: project,
                 channel,
-                status: s
+                status: s,
+                config: projects[project]
             };
         });
 }
@@ -90,7 +112,7 @@ function printStatus(project, channel, release) {
 function release(argv) {
     let project;
 
-    return selectProject().then((p) => {
+    return selectProject(argv).then((p) => {
             project = p;
 
             printStatus(project.name, project.channel, project.status);
@@ -102,33 +124,48 @@ function release(argv) {
                 }
             });
         }).then((builds) => {
-            let choices = builds.map((build) => {
-                let choice = {
-                    name: `${build.buildVersion} (${_formatDate(build.buildDate)})`,
-                    value: build
-                };
+            if (argv.build) {
+                let versions = builds.map(b => `${b.version}-${b.number}`),
+                    index = versions.indexOf(argv.build);
 
-                if (project.status &&
-                    project.status.version === build.version &&
-                    project.status.number === build.number) {
+                if (builds.length > 0 && argv.build === 'latest') {
+                    console.log('Releasing ' + versions[0].yellow);
+                    return Promise.resolve({build: builds[0]});
+                } else if (index >= 0) {
+                    console.log('Releasing ' + versions[index].yellow);
+                    return Promise.resolve({build: builds[index]});
+                } else {
+                    throw new Error('Build ' + argv.build.yellow + ' not found');
+                }
+            } else {
+                let choices = builds.map((build) => {
+                    let choice = {
+                        name: `${build.buildVersion} (${_formatDate(build.buildDate)})`,
+                        value: build
+                    };
 
-                    choice.name += ' (current)'.yellow;
+                    if (project.status &&
+                        project.status.version === build.version &&
+                        project.status.number === build.number) {
+
+                        choice.name += ' (current)'.yellow;
+                    }
+
+                    return choice;
+                });
+
+                if (choices.length > 0) {
+                    choices[0].name += ' (latest)'.gray
                 }
 
-                return choice;
-            });
-
-            if (choices.length > 0) {
-                choices[0].name += ' (latest)'.gray
+                return inquirer.prompt([{
+                    type: 'list',
+                    name: 'build',
+                    message: 'Pick a build to deploy',
+                    paginated: true,
+                    choices: choices
+                }]);
             }
-
-            return inquirer.prompt([{
-                type: 'list',
-                name: 'build',
-                message: 'Pick a build to deploy',
-                paginated: true,
-                choices: choices
-            }]);
         }).then(answers => {
             build = answers.build;
 
@@ -145,16 +182,27 @@ function release(argv) {
             console.log(`    Built:   ${_formatDate(build.buildDate).cyan}`);
             console.log('');
 
-            return inquirer.prompt([{
-                type: 'confirm',
-                name: 'proceed',
-                message: `All good?`,
-                default: false
-            }]);
+            /* Skip confirmation in non-interactive mode */
+            if (argv.name && argv.channel && argv.build) {
+                return Promise.resolve({proceed: true});
+            } else {
+                return inquirer.prompt([{
+                    type: 'confirm',
+                    name: 'proceed',
+                    message: `All good?`,
+                    default: false
+                }]);
+            }
         }).then(answers => {
             if (answers.proceed) {
                 console.log(`Deploying ${build.project.cyan} ${build.buildVersion.yellow} to ${build.channel.cyan}`);
-                return kart.release(build);
+                return kart.release(build)
+                    .then(() => {
+                        let url = project.config['channels'][project.channel].url;
+                        if (url) {
+                            console.log(`Deployed to ${url.yellow}`);
+                        }
+                    });
             } else {
                 console.log('Aborted');
                 return;
@@ -208,7 +256,23 @@ function archive(argv) {
 // ----
 
 let argv = yargs
-    .command('release', 'deploy a new release of a project', () => {}, (argv) => {
+    .command('release', 'deploy a new release of a project', {
+        'name': {
+            alias: 'n',
+            describe: 'project to be released',
+            type: 'string'
+        },
+        'channel': {
+            alias: 'c',
+            describe: 'channel to be released',
+            type: 'string'
+        },
+        'build': {
+            alias: 'b',
+            describe: 'build tag (e.g., 0.3.3-4 or latest)',
+            type: 'string'
+        },
+    }, (argv) => {
         console.log('kart: Making a release');
         release(argv).catch((err) => {
             console.log(err);
