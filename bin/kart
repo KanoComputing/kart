@@ -182,6 +182,9 @@ function release(argv) {
 
             if (build.metadata.revision) {
                 console.log(`    Commit:  ${build.metadata.revision}`);
+                if (project.config.github) {
+                    console.log(`             ` + `https://github.com/${project.config.github}/commit/${build.metadata.revision}`.gray);
+                }
             }
 
             console.log(`    Built:   ${_formatDate(build.buildDate).cyan}`);
