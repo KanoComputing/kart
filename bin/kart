@@ -280,7 +280,9 @@ let argv = yargs
     }, (argv) => {
         console.log('kart: Making a release');
         kart.getMOTD().then((motd) => {
-            console.log("\n" + motd + "\n");
+            if (motd) {
+                console.log("\n" + motd + "\n");
+            }
 
             return release(argv).catch((err) => {
                 console.log(err);
@@ -301,7 +303,9 @@ let argv = yargs
     }, (argv) => {
         console.log('kart: Showing status for channel');
         kart.getMOTD().then((motd) => {
-            console.log("\n" + motd + "\n");
+            if (motd) {
+                console.log("\n" + motd + "\n");
+            }
 
             status(argv).catch((err) => {
                 console.log(err);
