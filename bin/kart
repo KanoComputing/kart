@@ -363,5 +363,10 @@ let argv = yargs
             return archive(argv);
         }
     })
-    .help()
+    .alias('h', 'help')
+    .help('help')
+
+    .alias('v', 'version')
+    .version(function() { return package.version; })
+    .describe('v', 'show version information')
     .argv;
