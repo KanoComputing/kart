@@ -63,18 +63,28 @@ the `rootBucket.config` option described above). The file looks something like t
 
 ```json
 {
+    "motd": [
+        "An optional message of the day that will be shown",
+        "to users working with this archive.",
+        "",
+        "Can span multiple lines like so!"
+    ],
     "projects": {
         "example-project": {
+            "github": "username/project",
             "channels": {
                 "staging": {
                     "deploy": {
                       "method": "s3",
                       "bucket": "example-staging-target"
+                    },
+                    "url": "https://where-is-this-served.url"
                 },
                 "production": {
                     "deploy": {
                       "method": "s3",
                       "bucket": "example-production-target"
+                    }
                 }
             }
         }
@@ -181,7 +191,8 @@ per channel in your archive's `kart-projects.json` file.
 ```json
     {
         "method": "s3",
-        "bucket": "target-bucket"
+        "bucket": "target-bucket",
+        "algorithm": "clear|overwrite|sync"
     }
 ```
 
@@ -190,7 +201,14 @@ unpacked. They will be uploaded directly to the root of the bucket with
 `public-read` ACL. At the moment, kart expets the bucket to be hosted under
 the same account as your root bucket is.
 
-**WARNING**: kart will empty the bucket before uploading the new files in it.
+#### Upload algorithms
+
+Optionally, you can change the way kart uploads the file into the bucket by
+setting the `algorithm` option to one of the following
+
+* **clear** (_default behaviour_): Empty the target bucked and upload the new build into it.
+* **overwrite**: Upload the new build into the bucket without removing everyting first.
+* **sync**: Use `aws s3 sync` to deploy into the bucket.
 
 ## TODO
 
