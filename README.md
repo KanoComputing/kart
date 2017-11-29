@@ -199,14 +199,8 @@ the same account as your root bucket is.
  * UI for remote configuration management via the kart binary
    * Adding/removing projects
  * UI for listing and downloading builds
- * Print URL after deploying
  * Tests using [mock-aws-s3](https://github.com/MathieuLoutre/mock-aws-s3)
- * Check for updates before releasing
- * Print configurable manifest before releasing
- * Associate a Github repo with a project
- * When showing commit hashes, show a complete URL
  * Make a Github release when pushing to certain channels
- * Add optional parameters to status and release commands
  * Add --version flag
 
 ## Licence

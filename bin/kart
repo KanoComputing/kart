@@ -17,6 +17,8 @@ function selectProject(opts) {
         project,
         channel;
 
+    opts = opts || {};
+
     return kart.getProjects()
         .then((p) => {
             projects = p;
@@ -85,14 +87,17 @@ function _formatDate(d) {
            `${_zeroPad(d.getHours())}:${_zeroPad(d.getMinutes())}:${_zeroPad(d.getSeconds())}`
 }
 
-function printStatus(project, channel, release) {
+function printStatus(project, channel, release, config) {
     console.log();
     console.log(`Current ${channel.cyan} release of ${project.cyan}:`);
-    
+
     if (release) {
         console.log(`    Version:  ` + `${release.buildVersion}`.yellow);
         if (release.metadata.revision) {
             console.log(`    Commit:   ` + `${release.metadata.revision}`);
+            if (config.github) {
+                console.log(`              ` + `https://github.com/${config.github}/commit/${release.metadata.revision}`.gray);
+            }
         } else {
             console.log(`    Commit:   ` + `???`.gray);
         }
@@ -115,7 +120,7 @@ function release(argv) {
     return selectProject(argv).then((p) => {
             project = p;
 
-            printStatus(project.name, project.channel, project.status);
+            printStatus(project.name, project.channel, project.status, project.config);
 
             return kart.archive.list(project.name, project.channel, {
                 sort: {
@@ -211,8 +216,8 @@ function release(argv) {
 }
 
 function status(argv) {
-    return selectProject().then((p) => {
-        printStatus(p.name, p.channel, p.status);
+    return selectProject(argv).then((p) => {
+        printStatus(p.name, p.channel, p.status, p.config);
     });
 }
 
@@ -274,14 +279,33 @@ let argv = yargs
         },
     }, (argv) => {
         console.log('kart: Making a release');
-        release(argv).catch((err) => {
-            console.log(err);
+        kart.getMOTD().then((motd) => {
+            console.log("\n" + motd + "\n");
+
+            return release(argv).catch((err) => {
+                console.log(err);
+            });
         });
     })
-    .command('status', 'show current deployments for a project', () => {}, (argv) => {
+    .command('status', 'show current deployments for a project', {
+        'name': {
+            alias: 'n',
+            describe: 'project to query',
+            type: 'string'
+        },
+        'channel': {
+            alias: 'c',
+            describe: 'channel to show',
+            type: 'string'
+        }
+    }, (argv) => {
         console.log('kart: Showing status for channel');
-        status(argv).catch((err) => {
-            console.log(err);
+        kart.getMOTD().then((motd) => {
+            console.log("\n" + motd + "\n");
+
+            status(argv).catch((err) => {
+                console.log(err);
+            });
         });
     })
     .command('archive <build-dir>', 'archive a build', {
