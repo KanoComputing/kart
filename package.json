@@ -1,6 +1,6 @@
 {
   "name": "kart",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "Kano Archive and Release Tool. Managing releases mainly of static websites.",
   "main": "lib/index.js",
   "bin": {
@@ -23,11 +23,11 @@
     "aws-sdk": "^2.111.0",
     "colors": "^1.1.2",
     "git-rev-sync": "^1.9.1",
+    "gunzip-maybe": "^1.4.1",
     "inquirer": "^3.2.3",
     "mime-types": "^2.1.17",
     "semver": "^5.4.1",
-    "tar.gz": "^1.0.5",
-    "tmp": "0.0.33",
+    "tar-stream": "^1.5.5",
     "update-notifier": "^2.3.0",
     "yargs": "^8.0.2"
   }

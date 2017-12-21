@@ -288,7 +288,7 @@ let argv = yargs
             }
 
             return release(argv).catch((err) => {
-                console.log(err);
+                console.log(`Release failed: ${err}`);
             });
         });
     })
