@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/KanoComputing/kart#readme",
   "dependencies": {
+    "async": "^2.6.0",
     "aws-sdk": "^2.111.0",
     "colors": "^1.1.2",
     "git-rev-sync": "^1.9.1",
@@ -27,9 +28,14 @@
     "inquirer": "^3.2.3",
     "mime-types": "^2.1.17",
     "semver": "^5.4.1",
-    "tar.gz": "^1.0.7",
     "tar-stream": "^1.5.5",
+    "tar.gz": "^1.0.7",
     "update-notifier": "^2.3.0",
     "yargs": "^8.0.2"
+  },
+  "devDependencies": {
+    "mocha": "^4.0.1",
+    "mock-aws-s3": "^2.6.0",
+    "tmp": "0.0.33"
   }
 }
