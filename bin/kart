@@ -7,8 +7,12 @@ const inquirer = require('inquirer'),
       colors = require('colors'),
       gitRev = require('git-rev-sync'),
       fs = require('fs');
+      os = require('os'),
       path = require('path'),
-      updateNotifier = require('update-notifier');
+      EventEmitter = require('events'),
+      updateNotifier = require('update-notifier'),
+
+      KART_RC_PATH = os.homedir() + '/.kartrc';
 
 updateNotifier({pkg: package}).notify();
 
@@ -203,8 +207,13 @@ function release(argv) {
             }
         }).then(answers => {
             if (answers.proceed) {
+                let reporter = new EventEmitter();
+                reporter.on('update', (detail) => {
+                    console.log('    ', detail.message);
+                });
+
                 console.log(`Deploying ${build.project.cyan} ${build.buildVersion.yellow} to ${build.channel.cyan}`);
-                return kart.release(build)
+                return kart.release(build, reporter)
                     .then(() => {
                         let url = project.config['channels'][project.channel].url;
                         if (url) {
@@ -247,7 +256,7 @@ function archive(argv) {
     }
 
     name = argv.name ? argv.name : name;
-    version = argv.version ? argv.version : version;
+    version = argv.buildVersion ? argv.buildVersion : version;
 
     return kart.archive.store(argv.buildDir, name, argv.channel, version, null, argv.arch, metadata)
         .then((b) => {
@@ -261,9 +270,53 @@ function archive(argv) {
         });
 }
 
+/* Used for testing the UI only */
+function setupMockS3(root) {
+    try {
+        let AWSMock = require('mock-aws-s3'),
+            s3mock;
+
+        AWSMock.config.basePath = root;
+        s3mock = AWSMock.S3();
+
+        kart.__mockS3API(s3mock);
+        console.log('!!! RUNNING IN TESTING MODE !!!'.red);
+    } catch (err) {
+        throw new Error('Failed to configure kart for testing.');
+    }
+}
+
+function handleCommonOptions(argv) {
+    let rcPath = argv.mockS3Root ? null : KART_RC_PATH,
+        configOverrides = {};
+
+    if (argv.mockS3Root) {
+        setupMockS3(argv.mockS3Root);
+    }
+
+    if (argv.archiveRoot) {
+        configOverrides.rootBucket = {
+            name: argv.archiveRoot
+        };
+    }
+
+    return kart.configure(configOverrides, rcPath);
+}
+
 // ----
 
 let argv = yargs
+    .options({
+        'archive-root': {
+            describe: 'override archive root bucket',
+            type: 'string',
+            alias: 'a'
+        },
+        'mock-s3-root': {
+            type: 'string',
+            hidden: true
+        }
+    })
     .command('release', 'deploy a new release of a project', {
         'name': {
             alias: 'n',
@@ -281,8 +334,10 @@ let argv = yargs
             type: 'string'
         },
     }, (argv) => {
-        console.log('kart: Making a release');
-        kart.getMOTD().then((motd) => {
+        handleCommonOptions(argv).then(() => {
+            console.log('kart: Making a release');
+            return kart.getMOTD();
+        }).then((motd) => {
             if (motd) {
                 console.log("\n" + motd + "\n");
             }
@@ -304,8 +359,10 @@ let argv = yargs
             type: 'string'
         }
     }, (argv) => {
-        console.log('kart: Showing status for channel');
-        kart.getMOTD().then((motd) => {
+        handleCommonOptions(argv).then(() => {
+            console.log('kart: Showing status for channel');
+            return kart.getMOTD();
+        }).then((motd) => {
             if (motd) {
                 console.log("\n" + motd + "\n");
             }
@@ -325,7 +382,8 @@ let argv = yargs
             describe: 'set project name (or override autodetected one)',
             type: 'string'
         },
-        'version': {
+        'build-version': {
+            alias: 'V',
             describe: 'set project version (or override autodetected one)',
             type: 'string'
         },
@@ -344,27 +402,14 @@ let argv = yargs
             type: 'string',
             demandOption: true
         },
-        'archive-root': {
-            describe: 'override archive root bucket',
-            type: 'string',
-            alias: 'a'
-        },
         'release': {
             describe: 'release after archiving',
             type: 'boolean'
         }
     }, (argv) => {
-        if (argv.archiveRoot) {
-            return kart.configure({
-                rootBucket: {
-                    name: argv.archiveRoot
-                }
-            }).then(() => {
-                    return archive(argv);
-                });
-        } else {
+        handleCommonOptions(argv).then(() => {
             return archive(argv);
-        }
+        });
     })
     .alias('h', 'help')
     .help('help')

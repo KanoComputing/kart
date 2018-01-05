@@ -1,121 +1,304 @@
 const kart = require('../lib'),
-      fs = require('fs'),
-      assert = require('assert'),
-      tmp = require('tmp'),
-      async = require('async'),
-      AWSMock = require('mock-aws-s3'),
-      ROOT_BUCKET = 'releases-root-testing',
-      CONFIG_NAME = 'kart-projects.json';
+      should = require('should'),
+      testUtil = require('./test-util');
 
-let tmpDir = null;
+describe('kart.archive', function () {
+    this.timeout(30000);
 
-function generateRandomString(length) {
-    let result = '',
-        alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789 ';
+    beforeEach(() => {
+        return testUtil.setupS3();
+    });
+    afterEach(() => {
+        testUtil.cleanupBuildDirectories();
+        return testUtil.teardownS3();
+    });
+    describe('.store()', () => {
+        it('empty directory', () => {
+            let buildDir;
 
-    for (let i = 0; i < length; i++) {
-        result += alphabet[Math.floor((Math.random() * alphabet.length))];
-    }
+            return testUtil.generateBuildDirectory({
+                fileCount: 0,
+                subdirs: 0
+            }).then((dir) => {
+                buildDir = dir;
+                return kart.archive.store(buildDir.path, 'testing', 'sync', '0.1.2', null, null, {revision: '1234567'});
+            }).then((archive) => {
+                archive.should.containEql({
+                    project: 'testing',
+                    channel: 'sync',
+                    version: '0.1.2',
+                    number: 1,
+                    arch: 'all',
+                    metadata: {
+                        revision: '1234567'
+                    }
+                });
 
-    return result;
-}
+                return testUtil.assertArchive(buildDir, archive);
+            });
+        });
+        it('no subdirectories', () => {
+            let buildDir;
 
-function generateRandomProject() {
-    return new Promise((resolve, reject) => {
-        tmp.dir({unsafeCleanup: true}, (err, path, cleanupCallback) => {
-            if (err) {
-                return reject(err);
-            }
+            return testUtil.generateBuildDirectory({
+                fileCount: [1, 5],
+                subdirs: 0
+            }).then((dir) => {
+                buildDir = dir;
+                return kart.archive.store(buildDir.path, 'testing', 'sync', '0.3.2', null, null, {revision: '3234567'});
+            }).then((archive) => {
+                archive.should.containEql({
+                    project: 'testing',
+                    channel: 'sync',
+                    version: '0.3.2',
+                    number: 1,
+                    arch: 'all',
+                    metadata: {
+                        revision: '3234567'
+                    }
+                });
 
-           let fileCount= Math.floor((Math.random() * 10) + 1),
-               fileNames = [];
-            async.times(fileCount, (i, next) => {
-                const fileLength = Math.floor((Math.random() * 1024 * 1024) + 2 * 1024),
-                      fileName = `file-${i}.txt`;
+                return testUtil.assertArchive(buildDir, archive);
+            });
+        });
+        it('with subdirectories', () => {
+            let buildDir;
 
-                fileNames.push(fileName);
-                fs.writeFile(`${path}/${fileName}`, generateRandomString(fileLength), next);
-            }, (err) => {
-                if (err) {
-                    return reject(err);
-                }
+            return testUtil.generateBuildDirectory({
+                fileCount: [10, 20],
+                subdirs: 3
+            }).then((dir) => {
+                buildDir = dir;
+                return kart.archive.store(buildDir.path, 'testing', 'sync', '0.5.6', null, 'armv7');
+            }).then((archive) => {
+                archive.should.containEql({
+                    project: 'testing',
+                    channel: 'sync',
+                    version: '0.5.6',
+                    number: 1,
+                    arch: 'armv7'
+                });
 
-                resolve({
-                    path: path,
-                    cleanup: cleanupCallback,
-                    files: fileNames
+                return testUtil.assertArchive(buildDir, archive);
+            });
+        });
+        it('sets revision metadata', () => {
+            return testUtil.generateBuildDirectory({
+                fileCount: [6, 12],
+                subdirs: 3
+            }).then((buildDir) => {
+                return kart.archive.store(buildDir.path, 'testing', 'sync', '0.1.1', null, null, {revision: '1134567'});
+            }).then((archive) => {
+                archive.should.containEql({
+                    project: 'testing',
+                    channel: 'sync',
+                    version: '0.1.1',
+                    number: 1,
+                    arch: 'all',
+                    metadata: {
+                        revision: '1134567'
+                    }
                 });
             });
         });
+        it('infers build number properly', () => {
+            let buildDirs;
+
+            return Promise.all([
+                testUtil.generateBuildDirectory({fileCount: 4}),
+                testUtil.generateBuildDirectory({fileCount: 2})
+            ]).then((dirs) => {
+                buildDirs = dirs;
+                return kart.archive.store(buildDirs[0].path, 'testing', 'sync', '0.1.1');
+            }).then((archive) => {
+                archive.should.containEql({
+                    project: 'testing',
+                    channel: 'sync',
+                    version: '0.1.1',
+                    number: 1,
+                    arch: 'all'
+                });
+
+                return kart.archive.store(buildDirs[1].path, 'testing', 'sync', '0.1.1')
+            }).then((archive) => {
+                archive.number.should.eql(2);
+            });
+        });
+        it('rejects non-existent directory', () => {
+            return kart.archive.store('/bogus/path/lol', 'testing', 'sync', '0.1.1').should.be.rejected();
+        });
+        it('rejects non-existent project', () => {
+            return testUtil.generateBuildDirectory({
+                fileCount: 1,
+                subdirs: 0
+            }).then((buildDir) => {
+                return kart.archive.store(buildDir.path, 'bogus-project', 'sync', '0.1.2');
+            }).should.be.rejected();
+        });
+        it('rejects non-existent channel', () => {
+            return testUtil.generateBuildDirectory({
+                fileCount: 1,
+                subdirs: 0
+            }).then((buildDir) => {
+                return kart.archive.store(buildDir.path, 'testing', 'bogus-channel', '0.1.2');
+            }).should.be.rejected();
+        });
     });
-}
 
-// Verify upload
-function assertUpload () {
+    describe('.list()', () => {
+        it('no builds', () => {
+            return kart.archive.list('testing', 'sync').then((builds) => {
+                builds.length.should.be.zero;
+            });
+        });
+        it('one build', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(1);
+            });
+        });
+        it('more builds', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.4'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(2);
+            });
+        });
 
-}
+        it('rejects non-existent project', () => {
+            return kart.archive.list('bogus-project', 'sync').should.be.rejected();
+        });
+        it('rejects non-existent channel', () => {
+            return kart.archive.list('testing', 'bogus-channel').should.be.rejected();
+        });
 
-function assetDeploy () {
-
-}
-
-describe('kart', function () {
-    this.timeout(10000);
-
-    before((done) => {
-        tmpDir = tmp.dirSync({unsafeCleanup: true});
-        AWSMock.config.basePath = tmpDir.name;
-
-        let s3 = AWSMock.S3();
-
-        s3.upload({
-            Bucket: ROOT_BUCKET,
-            Key: CONFIG_NAME,
-            Body: JSON.stringify({
-                projects: {
-                    "testing": {
-                        github: "KanoComputing/testing",
-                        channels: {
-                            sync: {
-                                method: "s3",
-                                bucket: "testing-sync",
-                                algorithm: "sync"
-                            },
-                            clear: {
-                                method: "s3",
-                                bucket: "testing-clear",
-                                algorithm: "clear"
-                            }
-                        }
+        it('filter by one key', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.4'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync', {
+                    filter: {
+                        version: '1.2.3'
                     }
-                }
-            })
-        }, (err, data) => {
-            kart.__mockS3API(s3);
+                });
+            }).then((list) => {
+                list.length.should.be.eql(3);
+            });
+        });
+        it('filter by two keys', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3', arch: 'amd64'},
+                {project: 'testing', channel: 'sync', version: '1.2.3', arch: 'amd64'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.4'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync', {
+                    filter: {
+                        version: '1.2.3',
+                        arch: 'amd64'
+                    }
+                });
+            }).then((list) => {
+                list.length.should.be.eql(2);
+            });
+        });
 
-            return kart.configure({
-                rootBucket: {
-                    name: ROOT_BUCKET,
-                    config: CONFIG_NAME
-                }
+        it('sort', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync', {
+                    sort: {
+                        key: ['project', 'number'],
+                        order: -1
+                    }
+                });
+            }).then((list) => {
+                list.length.should.be.eql(4);
+                list[0].number.should.be.eql(4);
+                list[3].number.should.be.eql(1);
+            });
+
+        });
+
+        it('limit', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.3'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync', {
+                    sort: {
+                        key: ['number'],
+                        order: -1
+                    },
+                    limit: 2
+                });
+            }).then((list) => {
+                list.length.should.be.eql(2);
+                list[0].number.should.be.eql(4);
+                list[1].number.should.be.eql(3);
+            });
+        });
+    });
+
+    describe('.remove()', () => {
+        it('regular build', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'},
+                {project: 'testing', channel: 'sync', version: '1.2.4'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(2);
+                return kart.archive.remove(list[0]);
             }).then(() => {
-                done();
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(1);
             });
         });
-    });
-    describe('.archive()', () => {
-        it('my test', () => {
-            return generateRandomProject().then((project) => {
-                console.log(project);
-                return kart.archive.store(project.path, 'testing', 'testing-sync', '0.1.2', null, null, {revision: '1234567'});
-            }).then((build) => {
-                console.log('lol', build);
-            }).catch((err) => {
-                console.log(err);
+        it('the last build', () => {
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(1);
+                return kart.archive.remove(list[0]);
+            }).then(() => {
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(0);
             });
         });
-    });
-    after(() => {
-        tmpDir.removeCallback();
+        it('ignore deleting non-existent build', () => {
+            let buildObject;
+
+            return testUtil.generateAndArchiveBuilds([
+                {project: 'testing', channel: 'sync', version: '1.2.3'}
+            ]).then((builds) => {
+                return kart.archive.list('testing', 'sync');
+            }).then((list) => {
+                list.length.should.be.eql(1);
+                buildObject = list[0];
+                return kart.archive.remove(list[0]);
+            }).then(() => {
+                return kart.archive.remove(buildObject).should.be.fulfilled();
+            });
+        });
     });
 });
