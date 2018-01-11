@@ -1,5 +1,7 @@
 # kart — Kano Archive and Release Tool
 
+[![Build Status](https://travis-ci.org/KanoComputing/kart.svg?branch=master)](https://travis-ci.org/KanoComputing/kart)
+
 Kart is a library and CLI tool to help managing releases. It has two main usecases:
 
  * Archiving builds per project and stability channel
