@@ -1,13 +1,14 @@
 {
   "name": "kart",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "description": "Kano Archive and Release Tool. Managing releases mainly of static websites.",
   "main": "lib/index.js",
   "bin": {
     "kart": "bin/kart"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/",
+    "coverage": "istanbul cover _mocha test/ -t30000 -- -R spec"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   },
   "homepage": "https://github.com/KanoComputing/kart#readme",
   "dependencies": {
+    "async": "^2.6.0",
     "aws-sdk": "^2.111.0",
     "colors": "^1.1.2",
     "git-rev-sync": "^1.9.1",
@@ -27,9 +29,20 @@
     "inquirer": "^3.2.3",
     "mime-types": "^2.1.17",
     "semver": "^5.4.1",
-    "tar.gz": "^1.0.7",
+    "tar-fs": "^1.16.0",
     "tar-stream": "^1.5.5",
     "update-notifier": "^2.3.0",
     "yargs": "^8.0.2"
+  },
+  "devDependencies": {
+    "inquirer-test": "^2.0.1",
+    "istanbul": "^0.4.5",
+    "mocha": "^4.0.1",
+    "mock-aws-s3": "^2.6.0",
+    "should": "^13.2.0",
+    "tmp": "0.0.33"
+  },
+  "engines": {
+      "node": ">=6.x"
   }
 }
