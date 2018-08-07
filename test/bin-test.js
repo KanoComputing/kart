@@ -1,7 +1,8 @@
 const kart = require('../lib'),
       should = require('should'),
       testUtil = require('./test-util'),
-      inquirerTest = require('inquirer-test');
+      inquirerTest = require('inquirer-test')
+      stripAnsi = require('strip-ansi');
 
 let s3Root;
 
@@ -9,7 +10,7 @@ function kartBinary(subcommand, params, input, timeout) {
     let command = ['./bin/kart', subcommand, '--a', 'testing-root', '--mock-s3-root', testUtil.mockS3Root];
 
     timeout = timeout || 1500;
-
+    
     if (params) {
         command = command.concat(params);
     }
@@ -70,7 +71,8 @@ describe('kart UI', function () {
                     'y'
                 ]);
             }).then((output) => {
-                output.should.match(/Deploying testing 1.2.3-1 to clear/);
+                output = stripAnsi(output);
+                output.should.match(/Deploying testing 1\.2\.3-1 to clear/);
 
                 return testUtil.assertRelease(build.archive);
             });
@@ -89,6 +91,7 @@ describe('kart UI', function () {
             }).then((release) => {
                 return kartBinary('status', [], [inquirerTest.ENTER, inquirerTest.DOWN, inquirerTest.DOWN, inquirerTest.ENTER]);
             }).then((output) => {
+                output = stripAnsi(output);
                 output.should.match(/Current clear release of testing:/);
                 output.should.match(/Version:\s+1\.2\.3\-1/);
                 output.should.match(/Commit:\s+1234567/);

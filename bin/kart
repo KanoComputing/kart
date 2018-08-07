@@ -241,6 +241,7 @@ function archive(argv) {
         packagejson,
         name,
         version,
+        type,
         metadata;
 
     if (argv.fromRepo) {
@@ -257,8 +258,18 @@ function archive(argv) {
 
     name = argv.name ? argv.name : name;
     version = argv.buildVersion ? argv.buildVersion : version;
+    type = argv.type ? argv.type : 'tar.gz';
 
-    return kart.archive.store(argv.buildDir, name, argv.channel, version, null, argv.arch, metadata)
+    return kart.archive.store(
+        argv.buildDir,
+        name,
+        argv.channel,
+        version,
+        null,
+        argv.arch,
+        metadata,
+        type,
+    )
         .then((b) => {
             build = b;
 
@@ -405,6 +416,12 @@ let argv = yargs
         'release': {
             describe: 'release after archiving',
             type: 'boolean'
+        },
+        'archive-type': {
+            alias: 't',
+            describe: 'set the compression type (defaults to tar.gz)',
+            choices: ['tar.gz', 'zip', 'ditto', 'none'],
+            default: 'tar.gz'
         }
     }, (argv) => {
         handleCommonOptions(argv).then(() => {
