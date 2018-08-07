@@ -76,7 +76,3 @@ describe('kart.archive', function () {
         });
     });
 });
-
-setTimeout(() => {
-
-}, 4000000000000000000000000);
