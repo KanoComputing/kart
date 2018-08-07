@@ -259,7 +259,7 @@ class TestUtil {
                     Key: archive.path
                 }).createReadStream(),
                 extract = tarStream.extract(),
-                remainingFiles = buildDirectory.files.slice(0);
+                remainingFiles = buildDirectory.files.slice(0).map(p => path.normalize(p));
 
             downloadStream.on('error', (error) => {
                 reject('Download failed: ' + error);
@@ -281,7 +281,7 @@ class TestUtil {
                 });
 
                 if (header.type !== 'directory') {
-                    fileIndex = remainingFiles.indexOf(header.name);
+                    fileIndex = remainingFiles.indexOf(path.normalize(header.name));
                     assert(fileIndex >= 0, `${header.name} not found in local build`);
 
                     fs.readFile(`${buildDirectory.path}/${header.name}`, (err, data) => {
