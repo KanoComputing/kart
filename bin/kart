@@ -266,7 +266,7 @@ function archive(argv) {
 
     name = argv.name ? argv.name : name;
     version = argv.buildVersion ? argv.buildVersion : version;
-    type = argv.type ? argv.type : 'tar.gz';
+    type = argv['archive-type'] ? argv['archive-type'] : 'tar.gz';
 
     return kart.archive.store(
         argv.buildDir,
