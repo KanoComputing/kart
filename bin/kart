@@ -16,6 +16,14 @@ const inquirer = require('inquirer'),
 
 updateNotifier({pkg: package}).notify();
 
+function handleError(e) {
+    if (process.env.DEBUG) {
+        console.error(e);
+    } else {
+        console.log(e.message.red);
+    }
+}
+
 function selectProject(opts) {
     let projects,
         project,
@@ -79,7 +87,7 @@ function selectProject(opts) {
                 status: s,
                 config: projects[project]
             };
-        });
+        }).catch(e => handleError(e));
 }
 
 function _zeroPad(v) {
@@ -224,7 +232,7 @@ function release(argv) {
                 console.log('Aborted');
                 return;
             }
-        });
+        }).catch(e => handleError(e));
 }
 
 function status(argv) {
@@ -278,7 +286,7 @@ function archive(argv) {
             if (argv.release) {
                 return kart.release(build);
             }
-        });
+        }).catch(e => handleError(e));
 }
 
 /* Used for testing the UI only */
