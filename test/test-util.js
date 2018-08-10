@@ -51,7 +51,7 @@ class TestUtil {
                         copy: {
                             deploy: {
                                 method: "s3-copy",
-                                channel: "testing-public",
+                                track: "testing-public",
                             }
                         }
                     }
