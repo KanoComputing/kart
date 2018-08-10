@@ -212,6 +212,34 @@ setting the `algorithm` option to one of the following
 * **overwrite**: Upload the new build into the bucket without removing everyting first.
 * **sync**: Use `aws s3 sync` to deploy into the bucket.
 
+### S3 Copy
+
+```json
+    {
+        "method": "s3-copy",
+        "track": "internal",
+        "namePattern": ":project_:version-:number_:arch.:ext"
+    }
+```
+
+This method copies an archive to a release track. A release track is located in the same directory as an archive.
+This method will not download and extract your archive, it will copy the s3 object across
+
+#### Naming
+
+Optionally, you can change the naming of the relased file using the namePattern option
+
+This option will receive the following properties from the archive:
+```
+project
+channel
+version
+number
+arch
+ext
+```
+And replace the keys in your name pattern
+
 ## TODO
 
  * Additional deploy-methods
@@ -219,9 +247,7 @@ setting the `algorithm` option to one of the following
  * UI for remote configuration management via the kart binary
    * Adding/removing projects
  * UI for listing and downloading builds
- * Tests using [mock-aws-s3](https://github.com/MathieuLoutre/mock-aws-s3)
  * Make a Github release when pushing to certain channels
- * Add --version flag
 
 ## Licence
 
