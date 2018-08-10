@@ -47,6 +47,12 @@ class TestUtil {
                                 bucket: "testing-clear",
                                 algorithm: "clear"
                             }
+                        },
+                        copy: {
+                            deploy: {
+                                method: "s3-copy",
+                                track: "testing-public",
+                            }
                         }
                     }
                 }
@@ -322,7 +328,17 @@ class TestUtil {
             });
         });
     }
-
+    assertFileExists(bucket, path) {
+        return new Promise((resolve, reject) => {
+            this.s3.getObject({
+                Bucket: bucket,
+                Key: path
+            }, (err, data) => {
+                assert(data, `File ${path} not found in ${bucket}`);
+                resolve();
+            });
+        });
+    }
     assertRelease (archive) {
         return new Promise((resolve, reject) => {
             let downloadStream = this.s3.getObject({
