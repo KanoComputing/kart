@@ -53,6 +53,13 @@ class TestUtil {
                                 method: "s3-copy",
                                 track: "testing-public",
                             }
+                        },
+                        rename: {
+                            deploy: {
+                                method: "s3-copy",
+                                track: "testing-public",
+                                namePattern: ":project-:version.:ext"
+                            }
                         }
                     }
                 }
