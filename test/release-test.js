@@ -1,6 +1,7 @@
 const kart = require('../lib'),
       Build = require('../lib/data').Build,
       should = require('should'),
+      assert = require('assert'),
       testUtil = require('./test-util');
 
 describe('kart', function () {
@@ -280,15 +281,20 @@ describe('kart', function () {
     describe('Deploy method: s3-copy', () => {
         describe('to channel', () => {
             it('deploy archive', () => {
-                let build;
+                let build, release
 
                 return testUtil.generateAndArchiveBuilds([
                     { project: 'testing', channel: 'copy', version: '1.2.3', metadata: { revision: '1234567' }, options: { fileCount: 1, subdirs: 0 } },
                 ]).then((res) => {
                     build = res[0];
                     return kart.release(build.archive);
-                }).then((release) => {
+                }).then((r) => {
+                    release = r;
                     return testUtil.assertFileExists(testUtil.ROOT_BUCKET, release.path);
+                }).then(() => {
+                    return kart.status('testing', 'copy');
+                }).then((status) => {
+                    assert.equal(status.version, release.version, 'Release status does not match');
                 });
             });
         });
