@@ -276,4 +276,21 @@ describe('kart', function () {
             });
         });
     });
+
+    describe('Deploy method: s3-copy', () => {
+        describe('to channel', () => {
+            it('deploy archive', () => {
+                let build;
+
+                return testUtil.generateAndArchiveBuilds([
+                    { project: 'testing', channel: 'copy', version: '1.2.3', metadata: { revision: '1234567' }, options: { fileCount: 1, subdirs: 0 } },
+                ]).then((res) => {
+                    build = res[0];
+                    return kart.release(build.archive);
+                }).then((release) => {
+                    return testUtil.assertFileExists(testUtil.ROOT_BUCKET, release.path);
+                });
+            });
+        });
+    });
 });
