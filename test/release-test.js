@@ -297,6 +297,19 @@ describe('kart', function () {
                     assert.equal(status.version, release.version, 'Release status does not match');
                 });
             });
+            it('rename archive', () => {
+                let build, release
+
+                return testUtil.generateAndArchiveBuilds([
+                    { project: 'testing', channel: 'rename', version: '1.2.3', metadata: { revision: '1234567' }, options: { fileCount: 1, subdirs: 0 } },
+                ]).then((res) => {
+                    build = res[0];
+                    return kart.release(build.archive);
+                }).then((r) => {
+                    release = r;
+                    assert.equal(release.path, 'testing/testing-public/testing-1.2.3.tar.gz');
+                });
+            });
         });
     });
 });
