@@ -6,6 +6,16 @@ pipeline {
     agent {
         label 'ubuntu_18.04'
     }
+    post {
+        always {
+            node('ubuntu_18.04') {
+                junit allowEmptyResults: true, testResults: 'test-results.xml'
+            }
+        }
+        regression {
+            notify_culprits currentBuild.result
+        }
+    }
     stages {
         stage('checkout') {
             steps {
@@ -50,14 +60,6 @@ pipeline {
                     sh "yarn test-ci"
                 }
             }
-        }
-    }
-    post {
-        always {
-            junit allowEmptyResults: true, testResults: 'test-results.xml'
-        }
-        regression {
-            notify_culprits currentBuild.result
         }
     }
 }
