@@ -324,7 +324,7 @@ function handleCommonOptions(argv) {
 }
 
 // ----
-
+/* eslint no-unused-expressions: "off" */
 yargs
     .options({
         'archive-root': {
@@ -440,4 +440,5 @@ yargs
 
     .alias('v', 'version')
     .version(() => pkg.version)
-    .describe('v', 'show version information');
+    .describe('v', 'show version information')
+    .argv;
