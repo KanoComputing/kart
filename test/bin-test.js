@@ -5,6 +5,7 @@ const inquirerTest = require('inquirer-test');
 const stripAnsi = require('strip-ansi');
 
 /* globals describe, beforeEach, afterEach, it */
+/* eslint func-names: "off" */
 
 function kartBinary(subcommand, params, input, timeout) {
     let command = ['./bin/kart', subcommand, '--a', 'testing-root', '--mock-s3-root', testUtil.mockS3Root];
@@ -18,7 +19,7 @@ function kartBinary(subcommand, params, input, timeout) {
     return inquirerTest(command, input, timeout);
 }
 
-describe('kart UI', function describe() {
+describe('kart UI', function () {
     this.timeout(30000);
 
     beforeEach(() => testUtil.setupS3());

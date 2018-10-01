@@ -5,8 +5,9 @@ const assert = require('assert');
 const testUtil = require('./test-util');
 
 /* globals describe, beforeEach, afterEach, it */
+/* eslint func-names: "off" */
 
-describe('kart', function describe() {
+describe('kart', function () {
     this.timeout(30000);
 
     beforeEach(() => testUtil.setupS3());

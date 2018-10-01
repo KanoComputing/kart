@@ -4,8 +4,9 @@ const testUtil = require('./test-util');
 
 /* globals describe, beforeEach, afterEach, it */
 /* eslint no-unused-expressions: "off" */
+/* eslint func-names: "off" */
 
-describe('kart.archive', function describe() {
+describe('kart.archive', function () {
     this.timeout(30000);
 
     beforeEach(() => testUtil.setupS3());
