@@ -8,9 +8,7 @@ pipeline {
     }
     post {
         always {
-            node('ubuntu_18.04') {
-                junit allowEmptyResults: true, testResults: 'test-results.xml'
-            }
+            junit allowEmptyResults: true, testResults: 'test-results.xml'
         }
         regression {
             notify_culprits currentBuild.result
