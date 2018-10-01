@@ -1,15 +1,15 @@
-const kart = require('../lib'),
-      s3 = require('../lib/s3-helpers'),
-      fs = require('fs'),
-      path = require('path'),
-      assert = require('assert'),
-      should = require('should'),
-      tmp = require('tmp'),
-      async = require('async'),
-      AWSMock = require('mock-aws-s3'),
+const kart = require('../lib');
+const fs = require('fs');
+const path = require('path');
+const assert = require('assert');
+/* eslint no-unused-vars: "off" */
+const should = require('should');
+const tmp = require('tmp');
+const async = require('async');
+const AWSMock = require('mock-aws-s3');
 
-      gunzip = require('gunzip-maybe'),
-      tarStream = require('tar-stream');
+const gunzip = require('gunzip-maybe');
+const tarStream = require('tar-stream');
 
 
 class TestUtil {
@@ -23,47 +23,47 @@ class TestUtil {
         this.CONFIG_NAME = 'kart-projects.json';
         this.REMOTE_CONFIG = {
             projects: {
-                "testing": {
-                    github: "KanoComputing/testing",
+                testing: {
+                    github: 'KanoComputing/testing',
                     channels: {
                         sync: {
                             deploy: {
-                                method: "s3",
-                                bucket: "testing-sync",
-                                algorithm: "sync"
+                                method: 's3',
+                                bucket: 'testing-sync',
+                                algorithm: 'sync',
                             },
-                            url: 'https://testing-project.lol'
+                            url: 'https://testing-project.lol',
                         },
                         overwrite: {
                             deploy: {
-                                method: "s3",
-                                bucket: "testing-overwrite",
-                                algorithm: "overwrite"
-                            }
+                                method: 's3',
+                                bucket: 'testing-overwrite',
+                                algorithm: 'overwrite',
+                            },
                         },
                         clear: {
                             deploy: {
-                                method: "s3",
-                                bucket: "testing-clear",
-                                algorithm: "clear"
-                            }
+                                method: 's3',
+                                bucket: 'testing-clear',
+                                algorithm: 'clear',
+                            },
                         },
                         copy: {
                             deploy: {
-                                method: "s3-copy",
-                                track: "testing-public",
-                            }
+                                method: 's3-copy',
+                                track: 'testing-public',
+                            },
                         },
                         rename: {
                             deploy: {
-                                method: "s3-copy",
-                                track: "testing-public",
-                                namePattern: ":project-:version.:ext"
-                            }
-                        }
-                    }
-                }
-            }
+                                method: 's3-copy',
+                                track: 'testing-public',
+                                namePattern: ':project-:version.:ext',
+                            },
+                        },
+                    },
+                },
+            },
         };
 
         this.tmpDir = null;
@@ -72,7 +72,7 @@ class TestUtil {
     }
 
     setupS3() {
-        this.tmpDir = tmp.dirSync({unsafeCleanup: true});
+        this.tmpDir = tmp.dirSync({ unsafeCleanup: true });
         AWSMock.config.basePath = this.tmpDir.name;
 
         return new Promise((resolve, reject) => {
@@ -80,19 +80,19 @@ class TestUtil {
             this.s3.upload({
                 Bucket: this.ROOT_BUCKET,
                 Key: this.CONFIG_NAME,
-                Body: JSON.stringify(this.REMOTE_CONFIG)
+                Body: JSON.stringify(this.REMOTE_CONFIG),
             }, (err, data) => {
                 kart.__mockS3API(this.s3);
 
                 return kart.configure({
                     rootBucket: {
                         name: this.ROOT_BUCKET,
-                        config: this.CONFIG_NAME
-                    }
+                        config: this.CONFIG_NAME,
+                    },
                 }).then(() => {
                     resolve();
-                }).catch((err) => {
-                    reject(new Error(err));
+                }).catch((e) => {
+                    reject(new Error(e));
                 });
             });
         });
@@ -107,7 +107,7 @@ class TestUtil {
         kart.__mockS3API(null);
         this.s3 = null;
 
-        return kart.configure({rootBucket: null});
+        return kart.configure({ rootBucket: null });
     }
 
     get mockS3Root() {
@@ -115,24 +115,24 @@ class TestUtil {
     }
 
     /* Builds */
-    _generateRandomString (length) {
-        let result = '',
-            alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789 ';
+    _generateRandomString(length) {
+        let result = '';
+        const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789 ';
 
-        for (let i = 0; i < length; i++) {
+        for (let i = 0; i < length; i += 1) {
             result += alphabet[Math.floor((Math.random() * alphabet.length))];
         }
 
         return result;
     }
 
-    _generateFilesInDirectory (dirPath, count, size) {
+    _generateFilesInDirectory(dirPath, count, size) {
         return new Promise((resolve, reject) => {
-            let fileNames = [];
+            const fileNames = [];
 
             async.times(count, (i, next) => {
-                let fileLength,
-                    fileName = `file-${i}.txt`;
+                let fileLength;
+                const fileName = `file-${i}.txt`;
 
                 if (Array.isArray(size)) {
                     /* Generate a value when range is given. */
@@ -142,13 +142,17 @@ class TestUtil {
                 }
 
                 fileNames.push(fileName);
-                fs.writeFile(path.join(dirPath, fileName), this._generateRandomString(fileLength), next);
+                fs.writeFile(
+                    path.join(dirPath, fileName),
+                    this._generateRandomString(fileLength),
+                    next,
+                );
             }, (err) => {
                 if (err) {
                     return reject(err);
                 }
 
-                resolve(fileNames);
+                return resolve(fileNames);
             });
         });
     }
@@ -162,7 +166,8 @@ class TestUtil {
 
         /* Generate when range is given. */
         if (Array.isArray(options.fileCount)) {
-            options.fileCount = Math.floor((Math.random() * options.fileCount[1]) + options.fileCount[0]);
+            options.fileCount =
+                Math.floor((Math.random() * options.fileCount[1]) + options.fileCount[0]);
         }
 
         if (Array.isArray(options.subdirs)) {
@@ -170,45 +175,49 @@ class TestUtil {
         }
 
         return new Promise((resolve, reject) => {
-            tmp.dir({unsafeCleanup: true}, (err, tmpPath, cleanupCallback) => {
+            tmp.dir({ unsafeCleanup: true }, (err, tmpPath, cleanupCallback) => {
                 if (err) {
                     return reject(err);
                 }
 
-                let filesPerSubdir = Math.ceil(options.fileCount / (options.subdirs + 1)),
-                    subdirs = [''],
-                    promises,
-                    allNames = [];
+                const filesPerSubdir = Math.ceil(options.fileCount / (options.subdirs + 1));
+                const subdirs = [''];
+                let promises;
+                let allNames = [];
 
                 async.times(options.subdirs, (i, next) => {
-                    let dirname = `dir-${i}`;
+                    const dirname = `dir-${i}`;
                     subdirs.push(dirname);
 
                     fs.mkdir(path.join(tmpPath, dirname), next);
-                }, (err) => {
-                    if (err) {
-                        return reject(err);
+                }, (e) => {
+                    if (e) {
+                        return reject(e);
                     }
 
-                    promises = subdirs.map((prefix) => {
-                        return this._generateFilesInDirectory(path.join(tmpPath, prefix), filesPerSubdir, options.fileSize);
-                    });
+                    promises = subdirs.map(prefix => this._generateFilesInDirectory(
+                        path.join(tmpPath, prefix),
+                        filesPerSubdir,
+                        options.fileSize,
+                    ));
 
-                    Promise.all(promises).then((namesArray) => {
+                    return Promise.all(promises).then((namesArray) => {
                         namesArray.forEach((names, i) => {
-                            allNames = allNames.concat(names.map((name) => path.join(subdirs[i], name)));
+                            allNames = allNames.concat(names
+                                .map(name => path.join(subdirs[i], name)));
                         });
 
-                        let build = {
+                        const build = {
                             path: tmpPath,
                             cleanup: cleanupCallback,
-                            files: allNames
+                            files: allNames,
                         };
 
                         this.buildDirectories.push(build);
                         resolve(build);
                     });
                 });
+                return null;
             });
         });
     }
@@ -216,17 +225,33 @@ class TestUtil {
     /** Accepts an array of objects with build metadata as follows
      *
      * [
-     *     {project: 'testing', channel: 'sync', version: '1.2.3', number: null, arch: null, metadata: {revision: '1234567'}, options: {}},
-     *     {project: 'testing', channel: 'sync', version: '1.2.3', number: null, arch: null, metadata: {revision: '1234567'}, options: {}},
+     *     {
+     *          project: 'testing',
+     *          channel: 'sync',
+     *          version: '1.2.3',
+     *          number: null,
+     *          arch: null,
+     *          metadata: {revision: '1234567'},
+     *          options: {}
+     *     },
+     *     {
+     *          project: 'testing',
+     *          channel: 'sync',
+     *          version: '1.2.3',
+     *          number: null,
+     *          arch: null,
+     *          metadata: {revision: '1234567'},
+     *          options: {},
+     *     },
      *     ...
      * ]
      *
      */
-    generateAndArchiveBuilds (builds) {
+    generateAndArchiveBuilds(builds) {
         return new Promise((resolve, reject) => {
-            let results = [];
+            const results = [];
             async.eachSeries(builds, (build, done) => {
-                let res = {};
+                const res = {};
                 this.generateBuildDirectory(build.options).then((buildDirectory) => {
                     res.buildDirectory = buildDirectory;
 
@@ -237,7 +262,7 @@ class TestUtil {
                         build.version,
                         build.number,
                         build.arch,
-                        build.metadata
+                        build.metadata,
                     );
                 }).then((archive) => {
                     res.archive = archive;
@@ -249,39 +274,40 @@ class TestUtil {
                     return reject(err);
                 }
 
-                resolve(results);
+                return resolve(results);
             });
         });
     }
 
-    cleanupBuildDirectories () {
+    cleanupBuildDirectories() {
         this.buildDirectories.forEach((buildDir) => {
             if (buildDir && buildDir.cleanup) {
                 return buildDir.cleanup();
             }
+            return null;
         });
         this.buildDirectories = [];
     }
 
 
     /* Asserts */
-    assertArchive (buildDirectory, archive) {
+    assertArchive(buildDirectory, archive) {
         return new Promise((resolve, reject) => {
-            let downloadStream = this.s3.getObject({
-                    Bucket: this.ROOT_BUCKET,
-                    Key: archive.path
-                }).createReadStream(),
-                extract = tarStream.extract(),
-                remainingFiles = buildDirectory.files.slice(0).map(p => path.normalize(p));
+            const downloadStream = this.s3.getObject({
+                Bucket: this.ROOT_BUCKET,
+                Key: archive.path,
+            }).createReadStream();
+            const extract = tarStream.extract();
+            const remainingFiles = buildDirectory.files.slice(0).map(p => path.normalize(p));
 
             downloadStream.on('error', (error) => {
-                reject('Download failed: ' + error);
+                reject(new Error(`Download failed: ${error.message}`));
             });
 
             extract.on('entry', (header, stream, next) => {
-                let localBuffer = null,
-                    remoteBuffer = Buffer.from(''),
-                    fileIndex;
+                let localBuffer = null;
+                let remoteBuffer = Buffer.from('');
+                let fileIndex;
 
                 stream.on('end', () => {
                     if (header.type !== 'directory') {
@@ -299,14 +325,14 @@ class TestUtil {
 
                     fs.readFile(`${buildDirectory.path}/${header.name}`, (err, data) => {
                         if (err) {
-                            console.log(err);
+                            console.error(err);
                         } else {
                             localBuffer = data;
                         }
 
                         /* Start reading data */
-                        stream.on('data', (data) => {
-                            remoteBuffer = Buffer.concat([remoteBuffer, data]);
+                        stream.on('data', (d) => {
+                            remoteBuffer = Buffer.concat([remoteBuffer, d]);
                         });
                     });
                 } else {
@@ -314,7 +340,7 @@ class TestUtil {
                 }
             });
 
-            extract.on('finish', function() {
+            extract.on('finish', () => {
                 assert.equal(remainingFiles.length, 0, `${remainingFiles} not found in remote build`);
                 resolve();
             });
@@ -323,40 +349,40 @@ class TestUtil {
         });
     }
 
-    assertFileOnS3 (bucket, path, content) {
-        return new Promise((resolve, reject) => {
+    assertFileOnS3(bucket, p, content) {
+        return new Promise((resolve) => {
             this.s3.getObject({
                 Bucket: bucket,
-                Key: path
+                Key: p,
             }, (err, data) => {
-                assert(data, `File ${path} not found in ${bucket}`);
-                assert.equal(data.Body, content, `Content of ${path} doesn't match`);
+                assert(data, `File ${p} not found in ${bucket}`);
+                assert.equal(data.Body, content, `Content of ${p} doesn't match`);
                 resolve();
             });
         });
     }
-    assertFileExists(bucket, path) {
-        return new Promise((resolve, reject) => {
+    assertFileExists(bucket, p) {
+        return new Promise((resolve) => {
             this.s3.getObject({
                 Bucket: bucket,
-                Key: path
+                Key: p,
             }, (err, data) => {
-                assert(data, `File ${path} not found in ${bucket}`);
+                assert(data, `File ${p} not found in ${bucket}`);
                 resolve();
             });
         });
     }
-    assertRelease (archive) {
+    assertRelease(archive) {
         return new Promise((resolve, reject) => {
-            let downloadStream = this.s3.getObject({
-                    Bucket: this.ROOT_BUCKET,
-                    Key: archive.path
-                }).createReadStream(),
-                extract = tarStream.extract(),
-                projects;
+            const downloadStream = this.s3.getObject({
+                Bucket: this.ROOT_BUCKET,
+                Key: archive.path,
+            }).createReadStream();
+            const extract = tarStream.extract();
+            let projects;
 
             downloadStream.on('error', (error) => {
-                reject('Download failed: ' + error);
+                reject(new Error(`Download failed: ${error.message}`));
             });
 
             extract.on('entry', (header, stream, next) => {
@@ -364,7 +390,11 @@ class TestUtil {
 
                 stream.on('end', () => {
                     if (header.type !== 'directory') {
-                        this.assertFileOnS3(projects[archive.project].channels[archive.channel].deploy.bucket, header.name, fileContent)
+                        this.assertFileOnS3(
+                            projects[archive.project].channels[archive.channel].deploy.bucket,
+                            header.name,
+                            fileContent,
+                        )
                             .then(() => {
                                 next();
                             });
@@ -386,12 +416,13 @@ class TestUtil {
                 /* Check archive data against the deployed kart file */
                 this.s3.getObject({
                     Bucket: projects[archive.project].channels[archive.channel].deploy.bucket,
-                    Key: 'kart.json'
+                    Key: 'kart.json',
                 }, (err, data) => {
-                    assert(data, `kart.json not found!`);
+                    assert(data, 'kart.json not found!');
 
-                    let kartJSON = JSON.parse(data.Body);
+                    const kartJSON = JSON.parse(data.Body);
 
+                    /* eslint no-unused-expressions: "off" */
                     kartJSON.releaseDate.should.be.a.Date;
                     kartJSON.buildDate.should.be.a.Date;
                     kartJSON.should.containEql({
@@ -399,7 +430,7 @@ class TestUtil {
                         channel: archive.channel,
                         version: archive.version,
                         number: archive.number,
-                        metadata: archive.metadata
+                        metadata: archive.metadata,
                     });
 
                     resolve();

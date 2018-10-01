@@ -1,20 +1,22 @@
 #!/usr/bin/env node
 
-const inquirer = require('inquirer'),
-      yargs = require('yargs'),
-      package = require('../package.json'),
-      kart = require('../lib'),
-      colors = require('colors'),
-      gitRev = require('git-rev-sync'),
-      fs = require('fs');
-      os = require('os'),
-      path = require('path'),
-      EventEmitter = require('events'),
-      updateNotifier = require('update-notifier'),
+const inquirer = require('inquirer');
+const yargs = require('yargs');
+const pkg = require('../package.json');
+const kart = require('../lib');
+require('colors');
+const gitRev = require('git-rev-sync');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { EventEmitter } = require('events');
+const updateNotifier = require('update-notifier');
 
-      KART_RC_PATH = os.homedir() + '/.kartrc';
+const KART_RC_PATH = `${os.homedir()}/.kartrc`;
 
-updateNotifier({pkg: package}).notify();
+updateNotifier({ pkg }).notify();
+
+/* eslint no-console: "off" */
 
 function handleError(e) {
     if (process.env.DEBUG) {
@@ -25,101 +27,99 @@ function handleError(e) {
 }
 
 function selectProject(opts) {
-    let projects,
-        project,
-        channel;
+    let projects;
+    let project;
+    let channel;
 
     opts = opts || {};
 
     return kart.getProjects()
         .then((p) => {
             projects = p;
-            let choices = Object.keys(projects),
-                dir = path.basename(process.cwd());
+            const choices = Object.keys(projects);
+            const dir = path.basename(process.cwd());
 
             /* Skip prompt when the user passed name via CLI args */
             if (opts.name) {
                 if (choices.indexOf(opts.name) >= 0) {
-                    console.log('Project: ' + opts.name.cyan);
-                    return Promise.resolve({project: opts.name});
-                } else {
-                    throw new Error('Project name not recognised');
+                    console.log(`Project: ${opts.name.cyan}`);
+                    return Promise.resolve({ project: opts.name });
                 }
+                throw new Error('Project name not recognised');
             } else {
                 return inquirer.prompt([{
                     type: 'list',
                     name: 'project',
                     message: 'Which project',
                     paginated: true,
-                    choices: choices,
-                    default: choices.indexOf(dir) >= 0 ? dir : null
+                    choices,
+                    default: choices.indexOf(dir) >= 0 ? dir : null,
                 }]);
             }
-        }).then(answers => {
-            project = answers.project;
-            let choices = Object.keys(projects[project].channels);
+        }).then((answers) => {
+            ({ project } = answers);
+            const choices = Object.keys(projects[project].channels);
 
             /* Skip prompt when the user passed channel via CLI args */
             if (opts.channel) {
                 if (choices.indexOf(opts.channel) >= 0) {
-                    console.log('Channel: ' + opts.channel.cyan);
-                    return Promise.resolve({channel: opts.channel});
-                } else {
-                    throw new Error('Channel doesn\'t exist for ' + project);
+                    console.log(`Channel: ${opts.channel.cyan}`);
+                    return Promise.resolve({ channel: opts.channel });
                 }
+                throw new Error(`Channel doesn't exist for ${project}`);
             } else {
                 return inquirer.prompt([{
                     type: 'list',
                     name: 'channel',
                     message: 'Which channel',
                     paginated: true,
-                    choices: choices
+                    choices,
                 }]);
             }
-        }).then(answers => {
-            channel = answers.channel;
+        }).then((answers) => {
+            ({ channel } = answers);
 
             return kart.status(project, channel);
-        }).then((s) => {
-            return {
-                name: project,
-                channel,
-                status: s,
-                config: projects[project]
-            };
-        }).catch(e => handleError(e));
+        })
+        .then(s => ({
+            name: project,
+            channel,
+            status: s,
+            config: projects[project],
+        }))
+        .catch(e => handleError(e));
 }
 
 function _zeroPad(v) {
-    return ('0' + v).slice(-2);
+    return (`0${v}`).slice(-2);
 }
 
 function _formatDate(d) {
     return `${_zeroPad(d.getDate())}/${_zeroPad(d.getMonth() + 1)}/${d.getFullYear()} ` +
-           `${_zeroPad(d.getHours())}:${_zeroPad(d.getMinutes())}:${_zeroPad(d.getSeconds())}`
+           `${_zeroPad(d.getHours())}:${_zeroPad(d.getMinutes())}:${_zeroPad(d.getSeconds())}`;
 }
 
-function printStatus(project, channel, release, config) {
+function printStatus(project, channel, rel, config) {
     console.log();
     console.log(`Current ${channel.cyan} release of ${project.cyan}:`);
 
-    if (release) {
-        console.log(`    Version:  ` + `${release.buildVersion}`.yellow);
-        if (release.metadata.revision) {
-            console.log(`    Commit:   ` + `${release.metadata.revision}`);
+    if (rel) {
+        console.log(`    Version:  ${`${rel.buildVersion}`.yellow}`);
+        if (rel.metadata.revision) {
+            console.log(`    Commit:   ${rel.metadata.revision}`);
             if (config.github) {
-                console.log(`              ` + `https://github.com/${config.github}/commit/${release.metadata.revision}`.gray);
+                console.log(`              ${`https://github.com/${config.github}/commit/${rel.metadata.revision}`.gray}`);
             }
         } else {
-            console.log(`    Commit:   ` + `???`.gray);
+            console.log(`    Commit:   ${'???'.gray}`);
         }
-        console.log(`    Built:    ${_formatDate(release.buildDate)}`);
-        console.log(`    Deployed: ${_formatDate(release.releaseDate)}`);
+        console.log(`    Built:    ${_formatDate(rel.buildDate)}`);
+        console.log(`    Deployed: ${_formatDate(rel.releaseDate)}`);
     } else {
-        console.log(`    Version:  ` + `unknown`.red);
-        console.log(`    Commit:   ` + `???`.gray);
-        console.log(`    Built:    ` + `???`.gray);
-        console.log(`    Deployed: ` + `???`.gray);
+        console.log(`    Version:  ${'unknown'.red}`);
+        console.log(`    Commit:   ${'???'.gray}`);
+        console.log(`    Built:    ${'???'.gray}`);
+        console.log(`    Deployed: ${'???'.gray}`);
     }
     console.log();
 }
@@ -130,72 +130,71 @@ function release(argv) {
     let project;
 
     return selectProject(argv).then((p) => {
-            project = p;
+        project = p;
 
-            printStatus(project.name, project.channel, project.status, project.config);
+        printStatus(project.name, project.channel, project.status, project.config);
 
-            return kart.archive.list(project.name, project.channel, {
-                sort: {
-                    key: 'buildDate',
-                    order: -1
-                }
-            });
-        }).then((builds) => {
-            if (argv.build) {
-                let versions = builds.map(b => `${b.version}-${b.number}`),
-                    index = versions.indexOf(argv.build);
+        return kart.archive.list(project.name, project.channel, {
+            sort: {
+                key: 'buildDate',
+                order: -1,
+            },
+        });
+    }).then((builds) => {
+        if (argv.build) {
+            const versions = builds.map(b => `${b.version}-${b.number}`);
+            const index = versions.indexOf(argv.build);
 
-                if (builds.length > 0 && argv.build === 'latest') {
-                    console.log('Releasing ' + versions[0].yellow);
-                    return Promise.resolve({build: builds[0]});
-                } else if (index >= 0) {
-                    console.log('Releasing ' + versions[index].yellow);
-                    return Promise.resolve({build: builds[index]});
-                } else {
-                    throw new Error('Build ' + argv.build.yellow + ' not found');
-                }
-            } else {
-                let choices = builds.map((build) => {
-                    let choice = {
-                        name: `${build.buildVersion} (${_formatDate(build.buildDate)})`,
-                        value: build
-                    };
+            if (builds.length > 0 && argv.build === 'latest') {
+                console.log(`Releasing ${versions[0].yellow}`);
+                return Promise.resolve({ build: builds[0] });
+            } else if (index >= 0) {
+                console.log(`Releasing ${versions[index].yellow}`);
+                return Promise.resolve({ build: builds[index] });
+            }
+            throw new Error(`Build ${argv.build.yellow} not found`);
+        } else {
+            const choices = builds.map((build) => {
+                const choice = {
+                    name: `${build.buildVersion} (${_formatDate(build.buildDate)})`,
+                    value: build,
+                };
 
-                    if (project.status &&
+                if (project.status &&
                         project.status.version === build.version &&
                         project.status.number === build.number) {
-
-                        choice.name += ' (current)'.yellow;
-                    }
-
-                    return choice;
-                });
-
-                if (choices.length > 0) {
-                    choices[0].name += ' (latest)'.gray
+                    choice.name += ' (current)'.yellow;
                 }
 
-                return inquirer.prompt([{
-                    type: 'list',
-                    name: 'build',
-                    message: 'Pick a build to deploy',
-                    paginated: true,
-                    choices: choices
-                }]);
-            }
-        }).then(answers => {
-            build = answers.build;
+                return choice;
+            });
 
-            return build.fetchMetadata();
-        }).then(() => {
+            if (choices.length > 0) {
+                choices[0].name += ' (latest)'.gray;
+            }
+
+            return inquirer.prompt([{
+                type: 'list',
+                name: 'build',
+                message: 'Pick a build to deploy',
+                paginated: true,
+                choices,
+            }]);
+        }
+    }).then((answers) => {
+        const { build } = answers;
+
+        return build.fetchMetadata().then(() => build);
+    })
+        .then((build) => {
             console.log('');
-            console.log(`Build details`);
+            console.log('Build details');
             console.log(`    Version: ${build.buildVersion.yellow}`);
 
             if (build.metadata.revision) {
                 console.log(`    Commit:  ${build.metadata.revision}`);
                 if (project.config.github) {
-                    console.log(`             ` + `https://github.com/${project.config.github}/commit/${build.metadata.revision}`.gray);
+                    console.log(`             ${`https://github.com/${project.config.github}/commit/${build.metadata.revision}`.gray}`);
                 }
             }
 
@@ -204,35 +203,35 @@ function release(argv) {
 
             /* Skip confirmation in non-interactive mode */
             if (argv.name && argv.channel && argv.build) {
-                return Promise.resolve({proceed: true});
-            } else {
-                return inquirer.prompt([{
-                    type: 'confirm',
-                    name: 'proceed',
-                    message: `All good?`,
-                    default: false
-                }]);
+                return Promise.resolve({ proceed: true });
             }
-        }).then(answers => {
-            if (answers.proceed) {
-                let reporter = new EventEmitter();
-                reporter.on('update', (detail) => {
-                    console.log('    ', detail.message);
-                });
+            return inquirer.prompt([{
+                type: 'confirm',
+                name: 'proceed',
+                message: 'All good?',
+                default: false,
+            }])
+                .then((answers) => {
+                    if (answers.proceed) {
+                        const reporter = new EventEmitter();
+                        reporter.on('update', (detail) => {
+                            console.log('    ', detail.message);
+                        });
 
-                console.log(`Deploying ${build.project.cyan} ${build.buildVersion.yellow} to ${build.channel.cyan}`);
-                return kart.release(build, reporter)
-                    .then(() => {
-                        let url = project.config['channels'][project.channel].url;
-                        if (url) {
-                            console.log(`Deployed to ${url.yellow}`);
-                        }
-                    });
-            } else {
-                console.log('Aborted');
-                return;
-            }
-        }).catch(e => handleError(e));
+                        console.log(`Deploying ${build.project.cyan} ${build.buildVersion.yellow} to ${build.channel.cyan}`);
+                        return kart.release(build, reporter)
+                            .then(() => {
+                                const { url } = project.config.channels[project.channel];
+                                if (url) {
+                                    console.log(`Deployed to ${url.yellow}`);
+                                }
+                            });
+                    }
+                    console.log('Aborted');
+                    return null;
+                });
+        })
+        .catch(e => handleError(e));
 }
 
 function status(argv) {
@@ -244,29 +243,29 @@ function status(argv) {
 // ----
 
 function archive(argv) {
-    let build,
-        packagejsonPath = './' + path.normalize(argv.fromRepo + '/package.json'),
-        packagejson,
-        name,
-        version,
-        type,
-        metadata;
+    let build;
+    const packagejsonPath = `./${path.normalize(`${argv.fromRepo}/package.json`)}`;
+    let packagejson;
+    let name;
+    let version;
+    let metadata;
 
     if (argv.fromRepo) {
         try {
             packagejson = JSON.parse(fs.readFileSync(packagejsonPath, 'utf8'));
-            name = packagejson.name;
-            version = packagejson.version;
+            ({ name } = packagejson);
+            ({ version } = packagejson);
+        /* eslint no-empty: "off" */
         } catch (err) {}
 
         metadata = {
-            revision: gitRev.long(argv.fromRepo)
+            revision: gitRev.long(argv.fromRepo),
         };
     }
 
     name = argv.name ? argv.name : name;
     version = argv.buildVersion ? argv.buildVersion : version;
-    type = argv['archive-type'] ? argv['archive-type'] : 'tar.gz';
+    const type = argv['archive-type'] ? argv['archive-type'] : 'tar.gz';
 
     return kart.archive.store(
         argv.buildDir,
@@ -286,17 +285,19 @@ function archive(argv) {
             if (argv.release) {
                 return kart.release(build);
             }
+            return null;
         }).catch(e => handleError(e));
 }
 
 /* Used for testing the UI only */
 function setupMockS3(root) {
     try {
-        let AWSMock = require('mock-aws-s3'),
-            s3mock;
+        /* eslint global-require: "off" */
+        /* eslint import/no-extraneous-dependencies: "off" */
+        const AWSMock = require('mock-aws-s3');
 
         AWSMock.config.basePath = root;
-        s3mock = AWSMock.S3();
+        const s3mock = AWSMock.S3();
 
         kart.__mockS3API(s3mock);
         console.log('!!! RUNNING IN TESTING MODE !!!'.red);
@@ -306,8 +307,8 @@ function setupMockS3(root) {
 }
 
 function handleCommonOptions(argv) {
-    let rcPath = argv.mockS3Root ? null : KART_RC_PATH,
-        configOverrides = {};
+    const rcPath = argv.mockS3Root ? null : KART_RC_PATH;
+    const configOverrides = {};
 
     if (argv.mockS3Root) {
         setupMockS3(argv.mockS3Root);
@@ -315,7 +316,7 @@ function handleCommonOptions(argv) {
 
     if (argv.archiveRoot) {
         configOverrides.rootBucket = {
-            name: argv.archiveRoot
+            name: argv.archiveRoot,
         };
     }
 
@@ -324,33 +325,33 @@ function handleCommonOptions(argv) {
 
 // ----
 
-let argv = yargs
+yargs
     .options({
         'archive-root': {
             describe: 'override archive root bucket',
             type: 'string',
-            alias: 'a'
+            alias: 'a',
         },
         'mock-s3-root': {
             type: 'string',
-            hidden: true
-        }
+            hidden: true,
+        },
     })
     .command('release', 'deploy a new release of a project', {
-        'name': {
+        name: {
             alias: 'n',
             describe: 'project to be released',
-            type: 'string'
+            type: 'string',
         },
-        'channel': {
+        channel: {
             alias: 'c',
             describe: 'channel to be released',
-            type: 'string'
+            type: 'string',
         },
-        'build': {
+        build: {
             alias: 'b',
             describe: 'build tag (e.g., 0.3.3-4 or latest)',
-            type: 'string'
+            type: 'string',
         },
     }, (argv) => {
         handleCommonOptions(argv).then(() => {
@@ -358,7 +359,7 @@ let argv = yargs
             return kart.getMOTD();
         }).then((motd) => {
             if (motd) {
-                console.log("\n" + motd + "\n");
+                console.log(`\n${motd}\n`);
             }
 
             return release(argv).catch((err) => {
@@ -367,23 +368,23 @@ let argv = yargs
         });
     })
     .command('status', 'show current deployments for a project', {
-        'name': {
+        name: {
             alias: 'n',
             describe: 'project to query',
-            type: 'string'
+            type: 'string',
         },
-        'channel': {
+        channel: {
             alias: 'c',
             describe: 'channel to show',
-            type: 'string'
-        }
+            type: 'string',
+        },
     }, (argv) => {
         handleCommonOptions(argv).then(() => {
             console.log('kart: Showing status for channel');
             return kart.getMOTD();
         }).then((motd) => {
             if (motd) {
-                console.log("\n" + motd + "\n");
+                console.log(`\n${motd}\n`);
             }
 
             status(argv).catch((err) => {
@@ -395,51 +396,48 @@ let argv = yargs
         'from-repo': {
             alias: 'r',
             describe: 'path to repository related to the build (for autodetecting params)',
-            type: 'string'
+            type: 'string',
         },
-        'name': {
+        name: {
             describe: 'set project name (or override autodetected one)',
-            type: 'string'
+            type: 'string',
         },
         'build-version': {
             alias: 'V',
             describe: 'set project version (or override autodetected one)',
-            type: 'string'
+            type: 'string',
         },
-        'revision': {
+        revision: {
             describe: 'set project revision (or override autodetected one)',
-            type: 'string'
+            type: 'string',
         },
-        'arch': {
+        arch: {
             describe: 'set build arch (defaults to all)',
             type: 'string',
-            default: 'all'
+            default: 'all',
         },
-        'channel': {
+        channel: {
             alias: 'c',
             describe: 'build to be archived',
             type: 'string',
-            demandOption: true
+            demandOption: true,
         },
-        'release': {
+        release: {
             describe: 'release after archiving',
-            type: 'boolean'
+            type: 'boolean',
         },
         'archive-type': {
             alias: 't',
             describe: 'set the compression type (defaults to tar.gz)',
             choices: ['tar.gz', 'zip', 'ditto', 'none'],
-            default: 'tar.gz'
-        }
+            default: 'tar.gz',
+        },
     }, (argv) => {
-        handleCommonOptions(argv).then(() => {
-            return archive(argv);
-        });
+        handleCommonOptions(argv).then(() => archive(argv));
     })
     .alias('h', 'help')
     .help('help')
 
     .alias('v', 'version')
-    .version(function() { return package.version; })
-    .describe('v', 'show version information')
-    .argv;
+    .version(() => pkg.version)
+    .describe('v', 'show version information');

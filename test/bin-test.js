@@ -1,16 +1,16 @@
-const kart = require('../lib'),
-      should = require('should'),
-      testUtil = require('./test-util'),
-      inquirerTest = require('inquirer-test')
-      stripAnsi = require('strip-ansi');
+const kart = require('../lib');
+require('should');
+const testUtil = require('./test-util');
+const inquirerTest = require('inquirer-test');
+const stripAnsi = require('strip-ansi');
 
-let s3Root;
+/* globals describe, beforeEach, afterEach, it */
 
 function kartBinary(subcommand, params, input, timeout) {
     let command = ['./bin/kart', subcommand, '--a', 'testing-root', '--mock-s3-root', testUtil.mockS3Root];
 
     timeout = timeout || 1500;
-    
+
     if (params) {
         command = command.concat(params);
     }
@@ -18,12 +18,10 @@ function kartBinary(subcommand, params, input, timeout) {
     return inquirerTest(command, input, timeout);
 }
 
-describe('kart UI', function () {
+describe('kart UI', function describe() {
     this.timeout(30000);
 
-    beforeEach(() => {
-        return testUtil.setupS3();
-    });
+    beforeEach(() => testUtil.setupS3());
     afterEach(() => {
         testUtil.cleanupBuildDirectories();
         return testUtil.teardownS3();
@@ -34,25 +32,24 @@ describe('kart UI', function () {
             let build;
             return testUtil.generateBuildDirectory({
                 fileCount: [10, 15],
-                subdirs: 3
-            }).then((dir) => {
-                return kartBinary('archive', [
+                subdirs: 3,
+            })
+                .then(dir => kartBinary('archive', [
                     '--name', 'testing',
                     '--channel', 'sync',
                     '--build-version', '1.2.3',
-                    dir.path
-                ], []).then((output) => {
-                    return kart.archive.list('testing', 'sync');
-                }).then((builds) => {
-                    builds.length.should.be.eql(1);
+                    dir.path,
+                ], [])
+                    .then(() => kart.archive.list('testing', 'sync'))
+                    .then((builds) => {
+                        builds.length.should.be.eql(1);
 
-                    build = builds[0];
-                    build.project.should.eql('testing');
-                    build.channel.should.eql('sync');
-                    build.version.should.eql('1.2.3');
-                    build.arch.should.eql('all');
-                });
-            })
+                        [build] = builds;
+                        build.project.should.eql('testing');
+                        build.channel.should.eql('sync');
+                        build.version.should.eql('1.2.3');
+                        build.arch.should.eql('all');
+                    }));
         });
     });
 
@@ -60,15 +57,17 @@ describe('kart UI', function () {
         it('release a build', () => {
             let build;
             return testUtil.generateAndArchiveBuilds([
-                {project: 'testing', channel: 'clear', version: '1.2.3', options: {fileCount: [10, 15], subdirs: 3}}
+                {
+                    project: 'testing', channel: 'clear', version: '1.2.3', options: { fileCount: [10, 15], subdirs: 3 },
+                },
             ]).then((builds) => {
-                build = builds[0];
+                [build] = builds;
 
                 return kartBinary('release', [], [
                     inquirerTest.ENTER,
                     inquirerTest.DOWN, inquirerTest.DOWN, inquirerTest.ENTER,
                     inquirerTest.ENTER,
-                    'y'
+                    'y',
                 ]);
             }).then((output) => {
                 output = stripAnsi(output);
@@ -76,7 +75,6 @@ describe('kart UI', function () {
 
                 return testUtil.assertRelease(build.archive);
             });
-
         });
     });
 
@@ -84,18 +82,21 @@ describe('kart UI', function () {
         it('prints the latest deployed build', () => {
             let build;
             return testUtil.generateAndArchiveBuilds([
-                {project: 'testing', channel: 'clear', version: '1.2.3', metadata: {revision: '1234567'}}
-            ]).then((builds) => {
-                build = builds[0];
-                return kart.release(build.archive);
-            }).then((release) => {
-                return kartBinary('status', [], [inquirerTest.ENTER, inquirerTest.DOWN, inquirerTest.DOWN, inquirerTest.ENTER]);
-            }).then((output) => {
-                output = stripAnsi(output);
-                output.should.match(/Current clear release of testing:/);
-                output.should.match(/Version:\s+1\.2\.3\-1/);
-                output.should.match(/Commit:\s+1234567/);
-            });
+                {
+                    project: 'testing', channel: 'clear', version: '1.2.3', metadata: { revision: '1234567' },
+                },
+            ])
+                .then((builds) => {
+                    [build] = builds;
+                    return kart.release(build.archive);
+                })
+                .then(() => kartBinary('status', [], [inquirerTest.ENTER, inquirerTest.DOWN, inquirerTest.DOWN, inquirerTest.ENTER]))
+                .then((output) => {
+                    output = stripAnsi(output);
+                    output.should.match(/Current clear release of testing:/);
+                    output.should.match(/Version:\s+1\.2\.3-1/);
+                    output.should.match(/Commit:\s+1234567/);
+                });
         });
     });
 });

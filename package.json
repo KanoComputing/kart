@@ -7,8 +7,12 @@
     "kart": "bin/kart"
   },
   "scripts": {
+    "checkstyle": "eslint ./lib ./test ./bin/kart",
+    "checkstyle-ci": "eslint ./lib ./test ./bin/kart -f checkstyle -o eslint.xml",
     "test": "mocha test/",
-    "coverage": "istanbul cover _mocha test/ -t30000 -- -R spec"
+    "test-ci": "mocha --reporter mocha-junit-reporter test/",
+    "coverage": "istanbul cover _mocha test/ -t30000 -- -R spec",
+    "docs": "typedoc --allowJs --ignoreCompilerErrors --module commonjs --out ./docs ./lib/index.js"
   },
   "repository": {
     "type": "git",
@@ -37,13 +41,18 @@
     "zip-stream": "^1.2.0"
   },
   "devDependencies": {
+    "@kano/eslint-config": "^1.0.0",
+    "eslint": "^4.19.1",
+    "eslint-plugin-import": "^2.14.0",
     "inquirer-test": "^2.0.1",
     "istanbul": "^0.4.5",
     "mocha": "^4.0.1",
+    "mocha-junit-reporter": "^1.18.0",
     "mock-aws-s3": "^2.6.0",
     "should": "^13.2.0",
     "strip-ansi": "^4.0.0",
-    "tmp": "0.0.33"
+    "tmp": "0.0.33",
+    "tsdoc": "^0.0.4"
   },
   "engines": {
     "node": ">=6.x"

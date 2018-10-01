@@ -1,14 +1,14 @@
-const kart = require('../lib'),
-      should = require('should'),
-      testUtil = require('./test-util'),
-      path = require('path');
+const kart = require('../lib');
+require('should');
+const testUtil = require('./test-util');
+const path = require('path');
 
-describe('kart.archive', function () {
+/* globals describe, beforeEach, afterEach, it */
+
+describe('kart.archive', function describe() {
     this.timeout(30000);
 
-    beforeEach(() => {
-        return testUtil.setupS3();
-    });
+    beforeEach(() => testUtil.setupS3());
     afterEach(() => {
         testUtil.cleanupBuildDirectories();
         return testUtil.teardownS3();

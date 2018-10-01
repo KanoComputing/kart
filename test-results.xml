@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="136.917" tests="46" failures="0">
+  <testsuite name="Root Suite" timestamp="2018-10-01T20:05:50" tests="0" failures="0" time="0">
+  </testsuite>
+  <testsuite name="kart.archive" timestamp="2018-10-01T20:05:50" tests="0" file="C:\Users\Paul\Documents\workspace\kart\test\archive-test.js" failures="0" time="0">
+  </testsuite>
+  <testsuite name=".store()" timestamp="2018-10-01T20:05:50" tests="8" file="C:\Users\Paul\Documents\workspace\kart\test\archive-test.js" failures="0" time="6.857000000000001">
+    <testcase name="kart.archive .store() empty directory" time="0.046" classname="empty directory">
+    </testcase>
+    <testcase name="kart.archive .store() no subdirectories" time="0.035" classname="no subdirectories">
+    </testcase>
+    <testcase name="kart.archive .store() with subdirectories" time="2.846" classname="with subdirectories">
+    </testcase>
+    <testcase name="kart.archive .store() sets revision metadata" time="3.197" classname="sets revision metadata">
+    </testcase>
+    <testcase name="kart.archive .store() infers build number properly" time="0.599" classname="infers build number properly">
+    </testcase>
+    <testcase name="kart.archive .store() rejects non-existent directory" time="0.001" classname="rejects non-existent directory">
+    </testcase>
+    <testcase name="kart.archive .store() rejects non-existent project" time="0.003" classname="rejects non-existent project">
+    </testcase>
+    <testcase name="kart.archive .store() rejects non-existent channel" time="0.13" classname="rejects non-existent channel">
+    </testcase>
+  </testsuite>
+  <testsuite name=".list()" timestamp="2018-10-01T20:05:57" tests="9" file="C:\Users\Paul\Documents\workspace\kart\test\archive-test.js" failures="0" time="18.467">
+    <testcase name="kart.archive .list() no builds" time="0" classname="no builds">
+    </testcase>
+    <testcase name="kart.archive .list() one build" time="0.82" classname="one build">
+    </testcase>
+    <testcase name="kart.archive .list() more builds" time="1.231" classname="more builds">
+    </testcase>
+    <testcase name="kart.archive .list() rejects non-existent project" time="0.001" classname="rejects non-existent project">
+    </testcase>
+    <testcase name="kart.archive .list() rejects non-existent channel" time="0" classname="rejects non-existent channel">
+    </testcase>
+    <testcase name="kart.archive .list() filter by one key" time="5.096" classname="filter by one key">
+    </testcase>
+    <testcase name="kart.archive .list() filter by two keys" time="4.139" classname="filter by two keys">
+    </testcase>
+    <testcase name="kart.archive .list() sort" time="4.953" classname="sort">
+    </testcase>
+    <testcase name="kart.archive .list() limit" time="2.227" classname="limit">
+    </testcase>
+  </testsuite>
+  <testsuite name=".remove()" timestamp="2018-10-01T20:06:16" tests="3" file="C:\Users\Paul\Documents\workspace\kart\test\archive-test.js" failures="0" time="5.204000000000001">
+    <testcase name="kart.archive .remove() regular build" time="2.037" classname="regular build">
+    </testcase>
+    <testcase name="kart.archive .remove() the last build" time="1.056" classname="the last build">
+    </testcase>
+    <testcase name="kart.archive .remove() ignore deleting non-existent build" time="2.111" classname="ignore deleting non-existent build">
+    </testcase>
+  </testsuite>
+  <testsuite name="kart.archive" timestamp="2018-10-01T20:06:21" tests="0" file="C:\Users\Paul\Documents\workspace\kart\test\archivers.test.js" failures="0" time="0">
+  </testsuite>
+  <testsuite name=".store()" timestamp="2018-10-01T20:06:21" tests="2" file="C:\Users\Paul\Documents\workspace\kart\test\archivers.test.js" failures="0" time="4.321">
+    <testcase name="kart.archive .store() with zip type" time="3.976" classname="with zip type">
+    </testcase>
+    <testcase name="kart.archive .store() with no type" time="0.345" classname="with no type">
+    </testcase>
+  </testsuite>
+  <testsuite name="kart UI" timestamp="2018-10-01T20:06:25" tests="0" file="C:\Users\Paul\Documents\workspace\kart\test\bin-test.js" failures="0" time="0">
+  </testsuite>
+  <testsuite name="kart archive" timestamp="2018-10-01T20:06:25" tests="1" file="C:\Users\Paul\Documents\workspace\kart\test\bin-test.js" failures="0" time="5.773">
+    <testcase name="kart UI kart archive archive a build" time="5.773" classname="archive a build">
+    </testcase>
+  </testsuite>
+  <testsuite name="kart release" timestamp="2018-10-01T20:06:31" tests="1" file="C:\Users\Paul\Documents\workspace\kart\test\bin-test.js" failures="0" time="13.372">
+    <testcase name="kart UI kart release release a build" time="13.372" classname="release a build">
+    </testcase>
+  </testsuite>
+  <testsuite name="kart status" timestamp="2018-10-01T20:06:44" tests="1" file="C:\Users\Paul\Documents\workspace\kart\test\bin-test.js" failures="0" time="7.998">
+    <testcase name="kart UI kart status prints the latest deployed build" time="7.998" classname="prints the latest deployed build">
+    </testcase>
+  </testsuite>
+  <testsuite name="kart" timestamp="2018-10-01T20:06:53" tests="0" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="0">
+  </testsuite>
+  <testsuite name=".release()" timestamp="2018-10-01T20:06:53" tests="4" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="3.81">
+    <testcase name="kart .release() normal archive" time="1.879" classname="normal archive">
+    </testcase>
+    <testcase name="kart .release() non-existent archive" time="1.93" classname="non-existent archive">
+    </testcase>
+    <testcase name="kart .release() non-existent project" time="0.001" classname="non-existent project">
+    </testcase>
+    <testcase name="kart .release() non-existent channel" time="0" classname="non-existent channel">
+    </testcase>
+  </testsuite>
+  <testsuite name="Deploy method: s3" timestamp="2018-10-01T20:06:56" tests="0" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="0">
+  </testsuite>
+  <testsuite name="sync algorithm" timestamp="2018-10-01T20:06:56" tests="5" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="17.430999999999997">
+    <testcase name="kart Deploy method: s3 sync algorithm empty archive" time="0.027" classname="empty archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3 sync algorithm single-level archive" time="1.945" classname="single-level archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3 sync algorithm archive with subdirs" time="2.924" classname="archive with subdirs">
+    </testcase>
+    <testcase name="kart Deploy method: s3 sync algorithm over same build" time="6.826" classname="over same build">
+    </testcase>
+    <testcase name="kart Deploy method: s3 sync algorithm over different build" time="5.709" classname="over different build">
+    </testcase>
+  </testsuite>
+  <testsuite name="overwrite algorithm" timestamp="2018-10-01T20:07:14" tests="5" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="22.968">
+    <testcase name="kart Deploy method: s3 overwrite algorithm empty archive" time="0.007" classname="empty archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3 overwrite algorithm single-level archive" time="0.912" classname="single-level archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3 overwrite algorithm archive with subdirs" time="6.579" classname="archive with subdirs">
+    </testcase>
+    <testcase name="kart Deploy method: s3 overwrite algorithm over same build" time="3.965" classname="over same build">
+    </testcase>
+    <testcase name="kart Deploy method: s3 overwrite algorithm over different build" time="11.505" classname="over different build">
+    </testcase>
+  </testsuite>
+  <testsuite name="clear algorithm" timestamp="2018-10-01T20:07:37" tests="5" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="30.548">
+    <testcase name="kart Deploy method: s3 clear algorithm empty archive" time="0.011" classname="empty archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3 clear algorithm single-level archive" time="0.568" classname="single-level archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3 clear algorithm archive with subdirs" time="7.845" classname="archive with subdirs">
+    </testcase>
+    <testcase name="kart Deploy method: s3 clear algorithm over same build" time="7.696" classname="over same build">
+    </testcase>
+    <testcase name="kart Deploy method: s3 clear algorithm over different build" time="14.428" classname="over different build">
+    </testcase>
+  </testsuite>
+  <testsuite name="Deploy method: s3-copy" timestamp="2018-10-01T20:08:08" tests="0" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="0">
+  </testsuite>
+  <testsuite name="to channel" timestamp="2018-10-01T20:08:08" tests="2" file="C:\Users\Paul\Documents\workspace\kart\test\release-test.js" failures="0" time="0.168">
+    <testcase name="kart Deploy method: s3-copy to channel deploy archive" time="0.114" classname="deploy archive">
+    </testcase>
+    <testcase name="kart Deploy method: s3-copy to channel rename archive" time="0.054" classname="rename archive">
+    </testcase>
+  </testsuite>
+</testsuites>
