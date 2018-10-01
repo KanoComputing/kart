@@ -8,3 +8,4 @@
 node_modules
 
 eslint.xml
+test-results.xml
