@@ -22,7 +22,12 @@ function handleError(e) {
     if (process.env.DEBUG) {
         console.error(e);
     } else {
-        console.log(e.message.red);
+        const message = e.message || e.stack;
+        if (message) {
+            console.log(message.red);
+        } else {
+            console.error(e);
+        }
     }
 }
 
